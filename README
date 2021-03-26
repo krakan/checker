@@ -1,0 +1,7 @@
+git clone https://github.com/kivy/buildozer.git
+buildozer init
+
+find . -perm 0444 | xargs -r chmod u+w
+buildozer android debug deploy run
+
+adb install bin/checker-0.1-armeabi-v7a-debug.apk

@@ -15,7 +15,7 @@ buildozer android debug deploy run
 adb install bin/checker-0.1-armeabi-v7a-debug.apk
 ```
 
-### Data format:
+### Data format
 
 ```
 [

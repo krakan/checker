@@ -28,12 +28,12 @@ import json
 # | | | +------------------+ | | | | |
 # | | | |Label             | | | | | |
 # | | | +------------------+ | | | | |
-# | | | +------------------+ | | | | |
-# | | | |Button            | | | | | |
-# | | | +------------------+ | | | | |
-# | | | +------------------+ | | | | |
-# | | | |Button            | | | | | |
-# | | | +------------------+ | | | | |
+# | | | +-++---------------+ | | | | |
+# | | | |x|| Button        | | | | | |
+# | | | +-++---------------+ | | | | |
+# | | | +-++---------------+ | | | | |
+# | | | |x|| Button        | | | | | |
+# | | | +-++---------------+ | | | | |
 # | | | +------------------+ | | | | |
 # | | | |Label             | | | | | |
 # | | | +------------------+ | | | | |
@@ -53,26 +53,91 @@ class CheckList(StackLayout):
     def __init__(self, **kwargs):
         super(CheckList, self).__init__(**kwargs)
 
-        def toggle(instance):
-            print(instance.section)
-            if instance.done:
-                instance.done = False
-                instance.background_color = [1,1,1,1]
-            else:
-                instance.done = True
-                instance.background_color = [0,0,1,1]
-            if self.hide.state == 'down' and instance.done:
-                stack.remove_widget(instance)
+        def hide(widget):
+                widget.height = 0
+                widget.opacity = 0
+                widget.disabled = True
 
-        def update(instance):
-            if instance.state == "down":
-                for item in stack.children[:]:
-                    try:
-                        if item.done:
-                            stack.remove_widget(item)
-                    except: pass
+        def unhide(widget):
+                widget.height = '30sp'
+                widget.opacity = 1
+                widget.disabled = False
+
+        def populate(stack, shoppingList):
+            for section in shoppingList:
+                sectionLabel = Button(
+                        text=section['section'],
+                        height=title.height,
+                        size_hint=(1, None),
+                )
+                stack.add_widget(sectionLabel)
+                for item in section['items']:
+                    label = Button(
+                        text=item['item'],
+                        height=title.height,
+                        size_hint=(0.95, None),
+                    )
+                    label.section = section
+                    label.sectionLabel = sectionLabel
+                    label.data = item
+                    label.bind(on_release = toggle)
+                    check = CheckBox(
+                        height=title.height,
+                        size_hint=(0.05, None),
+                    )
+                    if label.data['done']:
+                          label.background_color = [0,0,1,1]
+                          check.state = 'down'
+                    check.label = label
+                    label.check = check
+                    check.bind(on_release = crossCheck)
+                    stack.add_widget(check)
+                    stack.add_widget(label)
+
+        def checkSection(stack, current):
+            isEmpty = True
+            for item in current.section['items']:
+                if not item['done']:
+                    isEmpty = False
+                    break
+            if isEmpty:
+                hide(current.sectionLabel)
+
+        def toggle(instance):
+            if instance.data['done']:
+                instance.data['done'] = False
+                instance.background_color = [1,1,1,1]
+                instance.check.state = 'normal'
             else:
-                print("not implemented")
+                instance.data['done'] = True
+                instance.background_color = [0,0,1,1]
+                instance.check.state = 'down'
+            if self.hide.state == 'down' and instance.data['done']:
+                hide(instance.check)
+                hide(instance)
+                checkSection(stack, instance)
+
+        def hideUnHide(instance):
+            if instance.state == "down":
+                hasChildren = False
+                for item in stack.children[:]:
+                    if isinstance(item, Button):
+                        try:
+                            if item.data['done']:
+                                hide(item.check)
+                                hide(item)
+                            else:
+                                hasChildren = True
+                        except:
+                            if not hasChildren:
+                                hide(item)
+                            hasChildren = False
+            else:
+                for item in stack.children[:]:
+                    unhide(item)
+
+        def crossCheck(instance):
+            toggle(instance.label)
 
         title = Label(
             text='Checker',
@@ -81,7 +146,34 @@ class CheckList(StackLayout):
         )
         self.add_widget(title)
 
-        shoppingList=json.load(open('Checker.json'))
+        if 'HOME' in os.environ:
+            dataDir = os.environ['HOME'] + '/.config/Checker/'
+        else:
+            dataDir = '/sdcard/Android/data/se.jonaseel.checker/files'
+
+        try:
+            with open(dataDir + '/Checker.json') as fd:
+                    shoppingList=json.load(fd)
+        except IOError:
+            shoppingList = json.loads('''
+            [
+              {"section": "Section 1", "items": [
+                {"item": "Item 1", "done": false},
+                {"item": "Item 2", "done": true},
+                {"item": "Item 3", "done": true}
+              ]},
+              {"section": "Section 2", "items": [
+                {"item": "Item 1", "done": true},
+                {"item": "Item 2", "done": false},
+                {"item": "Item 3", "done": false},
+                {"item": "Item 4", "done": true}
+              ]},
+              {"section": "Section 3", "items": [
+                {"item": "Item 1", "done": true},
+                {"item": "Item 2", "done": true},
+                {"item": "Item 3", "done": false}
+              ]}
+            ]''')
 
         scrollBox = ScrollView(
             size_hint=(1, .9),
@@ -95,25 +187,7 @@ class CheckList(StackLayout):
         )
         scrollBox.add_widget(stack)
 
-        for section in shoppingList:
-            stack.add_widget(
-                Label(
-                    text=section['section'],
-                    height=title.height,
-                    size_hint=(1, None),
-                ))
-            for item  in section['items']:
-                label = Button(
-                        text=item['item'],
-                        height=title.height,
-                        size_hint=(1, None),
-                    )
-                label.section = section['section']
-                label.done = item['done']
-                if label.done:
-                      label.background_color = [0,0,1,1]
-                label.bind(on_release = toggle)
-                stack.add_widget(label)
+        populate(stack, shoppingList)
 
         buttons = BoxLayout(
             size_hint=(1, .05)
@@ -125,7 +199,7 @@ class CheckList(StackLayout):
                 size_hint=(None, 1)
             ))
         self.hide = CheckBox(
-                on_release=update,
+                on_release=hideUnHide,
                 size_hint=(None, 1),
             )
         buttons.add_widget(self.hide)

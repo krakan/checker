@@ -11,6 +11,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.clock import Clock
 
 import os
 import sys
@@ -53,28 +54,73 @@ class CheckList(StackLayout):
     def __init__(self, **kwargs):
         super(CheckList, self).__init__(**kwargs)
 
+        if 'HOME' in os.environ:
+            dataDir = os.environ['HOME'] + '/.config/Checker/'
+        else:
+            dataDir = '/sdcard/Android/data/se.jonaseel.checker/files'
+
+        try:
+            with open(dataDir + '/Checker.json') as fd:
+                    shoppingList=json.load(fd)
+        except:
+            shoppingList = [
+              {"section": "Section 1", "items": [
+                {"item": "Item 1", "done": False},
+                {"item": "Item 2", "done": True},
+                {"item": "Item 3", "done": True}
+              ]},
+              {"section": "Section 2", "items": [
+                {"item": "Item 1", "done": True},
+                {"item": "Item 2", "done": False},
+                {"item": "Item 3", "done": False},
+                {"item": "Item 4", "done": True}
+              ]},
+              {"section": "Section 3", "items": [
+                {"item": "Item 1", "done": True},
+                {"item": "Item 2", "done": True},
+                {"item": "Item 3", "done": False}
+              ]}
+            ]
+
+        defaultSettings = {
+            'headerSize': '10sp',
+            'sectionSize': '20sp',
+            'sectionTextSize': '10',
+            'labelSize': '30sp',
+            'doneColor': [0, 1, 0, 1],
+        }
+        try:
+            with open(dataDir + '/settings.json') as fd:
+                    settings=json.load(fd)
+                    for key in defaultSettings:
+                        if not key in settings:
+                            settings[key] = defaultSettings[key]
+        except:
+            settings = defaultSettings
+
         def hide(widget):
-                widget.height = 0
-                widget.opacity = 0
-                widget.disabled = True
+            widget.height = 0
+            widget.opacity = 0
+            widget.disabled = True
 
         def unhide(widget):
-                widget.height = '30sp'
-                widget.opacity = 1
-                widget.disabled = False
+            widget.height = settings['labelSize'],
+            widget.opacity = 1
+            widget.disabled = False
 
         def populate(stack, shoppingList):
             for section in shoppingList:
                 sectionLabel = Button(
-                        text=section['section'],
-                        height=title.height,
+                        text=f"[size={settings['sectionTextSize']}]{section['section'].upper()}[/size]",
+                        height=settings['sectionSize'],
                         size_hint=(1, None),
+                        markup=True,
                 )
                 stack.add_widget(sectionLabel)
                 for item in section['items']:
                     label = Button(
                         text=item['item'],
-                        height=title.height,
+                        height=settings['labelSize'],
                         size_hint=(0.95, None),
                     )
                     label.section = section
@@ -86,7 +132,7 @@ class CheckList(StackLayout):
                         size_hint=(0.05, None),
                     )
                     if label.data['done']:
-                          label.background_color = [0,0,1,1]
+                          label.background_color = settings['doneColor']
                           check.state = 'down'
                     check.label = label
                     label.check = check
@@ -103,6 +149,13 @@ class CheckList(StackLayout):
             if isEmpty:
                 hide(current.sectionLabel)
 
+        self.writeDeferred = False
+        def deferWrite(dt):
+            self.writeDeferred = False
+            with open(dataDir + '/Checker.json', 'w') as fd:
+                json.dump(shoppingList, fd)
+            print("shoppingList saved")
+
         def toggle(instance):
             if instance.data['done']:
                 instance.data['done'] = False
@@ -110,8 +163,13 @@ class CheckList(StackLayout):
                 instance.check.state = 'normal'
             else:
                 instance.data['done'] = True
-                instance.background_color = [0,0,1,1]
+                instance.background_color = settings['doneColor']
                 instance.check.state = 'down'
+
+            if not self.writeDeferred:
+                self.writeDeferred = True
+                Clock.schedule_once(deferWrite, 1)
+
             if self.hide.state == 'down' and instance.data['done']:
                 hide(instance.check)
                 hide(instance)
@@ -142,38 +200,9 @@ class CheckList(StackLayout):
         title = Label(
             text='Checker',
             size_hint=(1, .05),
-            height = '30sp',
+            height = settings['headerSize'],
         )
         self.add_widget(title)
-
-        if 'HOME' in os.environ:
-            dataDir = os.environ['HOME'] + '/.config/Checker/'
-        else:
-            dataDir = '/sdcard/Android/data/se.jonaseel.checker/files'
-
-        try:
-            with open(dataDir + '/Checker.json') as fd:
-                    shoppingList=json.load(fd)
-        except IOError:
-            shoppingList = json.loads('''
-            [
-              {"section": "Section 1", "items": [
-                {"item": "Item 1", "done": false},
-                {"item": "Item 2", "done": true},
-                {"item": "Item 3", "done": true}
-              ]},
-              {"section": "Section 2", "items": [
-                {"item": "Item 1", "done": true},
-                {"item": "Item 2", "done": false},
-                {"item": "Item 3", "done": false},
-                {"item": "Item 4", "done": true}
-              ]},
-              {"section": "Section 3", "items": [
-                {"item": "Item 1", "done": true},
-                {"item": "Item 2", "done": true},
-                {"item": "Item 3", "done": false}
-              ]}
-            ]''')
 
         scrollBox = ScrollView(
             size_hint=(1, .9),
@@ -217,5 +246,3 @@ class Checker(App):
 
 if __name__ == '__main__':
     Checker().run()
-
-

@@ -16,6 +16,8 @@ from kivy.clock import Clock
 import os
 import sys
 import json
+from glob import glob
+from datetime import datetime
 
 # +----------------------------------+
 # | StackLayout                      |
@@ -109,6 +111,7 @@ class CheckList(StackLayout):
             widget.disabled = False
 
         def populate(stack, shoppingList):
+            stack.clear_widgets()
             for section in shoppingList:
                 sectionLabel = Button(
                         text=section['section'].upper(),
@@ -129,7 +132,7 @@ class CheckList(StackLayout):
                     label.data = item
                     label.bind(on_release = toggle)
                     check = CheckBox(
-                        height=title.height,
+                        height=settings['labelSize'],
                         size_hint=(0.05, None),
                     )
                     if label.data['done']:
@@ -153,9 +156,19 @@ class CheckList(StackLayout):
         self.writeDeferred = False
         def deferWrite(dt):
             self.writeDeferred = False
-            with open(dataDir + '/Checker.json', 'w') as fd:
+            now = datetime.now().strftime("%Y%m%d%H%M%S")
+            os.rename(f'{dataDir}/Checker.json', f'{dataDir}/Checker-{now}.json')
+            with open(f'{dataDir}/Checker.json', 'w') as fd:
                 json.dump(shoppingList, fd)
-            print("shoppingList saved")
+
+        def undo(instance):
+            try:
+                last = sorted(glob(f'{dataDir}/Checker-*.json'))[-1]
+                os.rename(last, f'{dataDir}/Checker.json')
+                with open(dataDir + '/Checker.json') as fd:
+                        shoppingList=json.load(fd)
+                populate(stack, shoppingList)
+            except: pass
 
         def toggle(instance):
             if instance.data['done']:
@@ -233,6 +246,12 @@ class CheckList(StackLayout):
                 size_hint=(None, 1),
             )
         buttons.add_widget(self.hide)
+        buttons.add_widget(
+            Button(
+                text="Undo",
+                on_release=undo,
+                size_hint=(1, 1),
+            ))
         buttons.add_widget(
             Button(
                 text="Quit",

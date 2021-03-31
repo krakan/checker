@@ -85,7 +85,7 @@ class CheckList(StackLayout):
         defaultSettings = {
             'headerSize': '10sp',
             'sectionSize': '20sp',
-            'sectionTextSize': '10',
+            'sectionTextSize': '10sp',
             'labelSize': '30sp',
             'doneColor': [0, 1, 0, 1],
         }
@@ -104,14 +104,15 @@ class CheckList(StackLayout):
             widget.disabled = True
 
         def unhide(widget):
-            widget.height = settings['labelSize'],
+            widget.height = settings['labelSize']
             widget.opacity = 1
             widget.disabled = False
 
         def populate(stack, shoppingList):
             for section in shoppingList:
                 sectionLabel = Button(
-                        text=f"[size={settings['sectionTextSize']}]{section['section'].upper()}[/size]",
+                        text=section['section'].upper(),
+                        font_size=settings['sectionTextSize'],
                         height=settings['sectionSize'],
                         size_hint=(1, None),
                         markup=True,

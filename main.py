@@ -17,7 +17,7 @@ import os
 import sys
 import json
 from glob import glob
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # +----------------------------------+
 # | StackLayout                      |
@@ -57,7 +57,7 @@ class CheckList(StackLayout):
         super(CheckList, self).__init__(**kwargs)
 
         if 'HOME' in os.environ:
-            dataDir = os.environ['HOME'] + '/.config/Checker/'
+            dataDir = os.environ['HOME'] + '/.config/Checker'
         else:
             dataDir = '/sdcard/Android/data/se.jonaseel.checker/files'
 
@@ -90,6 +90,8 @@ class CheckList(StackLayout):
             'sectionTextSize': '10sp',
             'labelSize': '30sp',
             'doneColor': [0, 1, 0, 1],
+            'backupsToKeep': 10,
+            'maxBackupAge': 1,
         }
         try:
             with open(dataDir + '/settings.json') as fd:
@@ -99,6 +101,13 @@ class CheckList(StackLayout):
                             settings[key] = defaultSettings[key]
         except:
             settings = defaultSettings
+
+        backups = sorted(glob(f'{dataDir}/Checker-*.json'))
+        cutoff = (datetime.now() - timedelta(days=settings['maxBackupAge'])).strftime("%Y%m%d%H%M%S")
+        for backup in backups[:-settings['backupsToKeep']]:
+            if backup < f'{dataDir}/Checker-{cutoff}.json':
+                print('deleting backup file ' + backup)
+                os.remove(backup)
 
         def hide(widget):
             widget.height = 0

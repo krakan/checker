@@ -111,14 +111,16 @@ class CheckList(StackLayout):
                 os.remove(backup)
 
         def hide(widget):
+            widget.restore = widget.height
             widget.height = 0
             widget.opacity = 0
             widget.disabled = True
 
         def unhide(widget):
-            widget.height = settings['labelSize']
-            widget.opacity = 1
-            widget.disabled = False
+            if widget.disabled:
+                widget.height = widget.restore
+                widget.opacity = 1
+                widget.disabled = False
 
         def populate(stack, shoppingList):
             stack.clear_widgets()
@@ -179,6 +181,7 @@ class CheckList(StackLayout):
                 with open(dataDir + '/Checker.json') as fd:
                         shoppingList=json.load(fd)
                 populate(stack, shoppingList)
+                hideUnHide(self.hide)
             except: pass
 
         def toggle(instance):

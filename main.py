@@ -148,69 +148,79 @@ class CheckList(StackLayout):
                 widget.opacity = 1
                 widget.disabled = False
 
+        def sectionButton(text):
+            label = LongpressButton(
+                text = text.upper(),
+                font_size = settings['sectionTextSize'],
+                height = settings['sectionSize'],
+                background_color = settings['sectionColor'],
+                size_hint = (1, None),
+                on_long_press = lambda w: edit(w),
+            )
+            label.origText = text
+            label.type = 'section'
+            return label
+
+        def itemButtonPair(text, done, section):
+            label = LongpressButton(
+                text = text,
+                height = settings['labelSize'],
+                size_hint = (0.95, None),
+                on_short_press = lambda w: toggle(w),
+                on_long_press = lambda w: edit(w),
+            )
+            label.section = section
+            label.type = 'item'
+            check = CheckBox(
+                height = settings['labelSize'],
+                size_hint = (0.05, None),
+                on_release = lambda w: crossCheck(w),
+            )
+            if done:
+                  label.background_color = settings['doneColor']
+                  check.state = 'down'
+            check.label = label
+            label.check = check
+            return label
+
         def populate(stack, shoppingList):
             stack.clear_widgets()
             for section in shoppingList:
-                sectionLabel = Button(
-                        text=section['section'].upper(),
-                        font_size=settings['sectionTextSize'],
-                        height=settings['sectionSize'],
-                        background_color=settings['sectionColor'],
-                        size_hint=(1, None),
-                        markup=True,
-                )
+                sectionLabel = sectionButton(section['section'])
                 stack.add_widget(sectionLabel)
                 for item in section['items']:
-                    label = LongpressButton(
-                        text=item['item'],
-                        height=settings['labelSize'],
-                        size_hint=(0.95, None),
-                        on_short_press=lambda w: toggle(w),
-                        on_long_press=lambda w: edit(w),
-                    )
-                    label.section = section
-                    label.sectionLabel = sectionLabel
-                    check = CheckBox(
-                        height=settings['labelSize'],
-                        size_hint=(0.05, None),
-                        on_release=lambda w: crossCheck(w),
-                    )
-                    if item['done']:
-                          label.background_color = settings['doneColor']
-                          check.state = 'down'
-                    check.label = label
-                    label.check = check
-                    stack.add_widget(check)
+                    label = itemButtonPair(item['item'], item['done'], sectionLabel)
+                    stack.add_widget(label.check)
                     stack.add_widget(label)
 
         def checkSection(stack, current):
-            isEmpty = True
-            for item in current.section['items']:
-                if not item['done']:
-                    isEmpty = False
-                    break
-            if isEmpty:
-                hide(current.sectionLabel)
+            for item in stack.children[::-1]:
+                try:
+                    if item.type != 'item': continue
+                except: continue
+                if item.section == current.section and item.check.state == 'normal':
+                    return
+            hide(current.section)
 
         self.writeDeferred = False
         def writeFile(dt):
-            self.writeDeferred = False
             shoppingList = []
             for item in stack.children[::-1]:
-                if isinstance(item, Button):
-                    try:
+                try:
+                    if item.type == 'item':
                         entry = {
                             "item": item.text,
                             "done": item.check.state == 'down'
                         }
                         section["items"].append(entry)
-                    except:
+                    else:
                         section = {
-                            "section": item.text,
+                            "section": item.origText,
                             "items": []
                         }
                         shoppingList.append(section)
-
+                except: pass
+            self.writeDeferred = False
             now = datetime.now().strftime("%Y%m%d%H%M%S")
             os.rename(f'{dataDir}/Checker.json', f'{dataDir}/Checker-{now}.json')
             with open(f'{dataDir}/Checker.json', 'w', encoding='utf8') as fd:
@@ -273,6 +283,8 @@ class CheckList(StackLayout):
                 multiline = False,
                 on_text_validate = lambda w: save(w),
             )
+            if instance.type == 'section':
+                entry.text = instance.origText
             before = Button(
                 text = '^',
                 height = settings['labelSize'],
@@ -305,7 +317,8 @@ class CheckList(StackLayout):
             entry.delete = delete
 
             hide(instance)
-            hide(instance.check)
+            if instance.type == 'item':
+                hide(instance.check)
             index = stack.children.index(instance)
             stack.add_widget(delete, index)
             stack.add_widget(entry, index)
@@ -321,8 +334,8 @@ class CheckList(StackLayout):
                 todo = 'before'
             elif entry.after.state == 'down':
                 todo = 'after'
-            text = entry.text
             orig = entry.orig
+            text = entry.text
 
             stack.remove_widget(entry.before)
             stack.remove_widget(entry.replace)
@@ -332,36 +345,32 @@ class CheckList(StackLayout):
 
             if todo == 'delete':
                 stack.remove_widget(orig)
-                stack.remove_widget(orig.check)
+                if orig.type == 'item':
+                    stack.remove_widget(orig.check)
             else:
                 unhide(orig)
-                unhide(orig.check)
+                if orig.type == 'item':
+                    unhide(orig.check)
                 if todo == 'before' or todo == 'after':
-                    label = LongpressButton(
-                        text = text,
-                        height=settings['labelSize'],
-                        size_hint=(0.95, None),
-                        on_short_press=lambda w: toggle(w),
-                        on_long_press=lambda w: edit(w),
-                    )
-                    label.section = orig.section
-                    label.sectionLabel = orig.sectionLabel
-                    check = CheckBox(
-                        height=settings['labelSize'],
-                        size_hint=(0.05, None),
-                        on_release=lambda w: crossCheck(w),
-                    )
-                    check.label = label
-                    label.check = check
+                    if orig.type == 'section':
+                        label = sectionButton(text)
+                    else:
+                        label = itemButtonPair(text, orig.check.state == 'down', orig.section)
+
                     index = stack.children.index(orig)
                     if todo == 'before':
-                        index += 2
-                    stack.add_widget(check, index)
+                        index += 1
+                    if orig.type == 'item':
+                        if todo == 'before':
+                            index += 1
+                        stack.add_widget(label.check, index)
                     stack.add_widget(label, index)
-                    if orig.check.state == 'down':
-                        toggle(label)
                 else:
-                    orig.text = text
+                    if orig.type == 'section':
+                        orig.origText = text
+                        orig.text = text.upper()
+                    else:
+                        orig.text = text
 
             writeFile(1)
 

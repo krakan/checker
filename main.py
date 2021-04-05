@@ -21,6 +21,7 @@ import json
 from glob import glob
 from datetime import datetime, timedelta
 
+
 # +----------------------------------+
 # | StackLayout                      |
 # | +------------------------------+ |
@@ -56,7 +57,7 @@ from datetime import datetime, timedelta
 class LongpressButton(Factory.Button):
     __events__ = ('on_long_press', 'on_short_press')
 
-    long_press_time = Factory.NumericProperty(1)
+    long_press_time = Factory.NumericProperty(0.2)
 
     def on_state(self, instance, value):
         lpt = self.long_press_time
@@ -212,8 +213,8 @@ class CheckList(StackLayout):
 
             now = datetime.now().strftime("%Y%m%d%H%M%S")
             os.rename(f'{dataDir}/Checker.json', f'{dataDir}/Checker-{now}.json')
-            with open(f'{dataDir}/Checker.json', 'w') as fd:
-                json.dump(shoppingList, fd, indent=2)
+            with open(f'{dataDir}/Checker.json', 'w', encoding='utf8') as fd:
+                json.dump(shoppingList, fd, indent=2, ensure_ascii=False)
 
         def undo(instance):
             try:
@@ -273,25 +274,26 @@ class CheckList(StackLayout):
                 on_text_validate = lambda w: save(w),
             )
             before = Button(
-                text = 'Add before',
+                text = '^',
                 height = settings['labelSize'],
                 size_hint = (0.125, None),
                 on_press = lambda w: save(entry),
             )
             replace = Button(
-                text = 'Replace',
+                text = 'o',
                 height = settings['labelSize'],
                 size_hint = (0.125, None),
                 on_press = lambda w: save(entry),
             )
             after = Button(
-                text = 'Add after',
+                text = 'v',
                 height = settings['labelSize'],
                 size_hint = (0.125, None),
                 on_press = lambda w: save(entry),
             )
             delete = Button(
-                text = 'Remove',
+                text = 'x',
+                background_color = [1, 0, 0, 1],
                 height = settings['labelSize'],
                 size_hint = (0.125, None),
                 on_press = lambda w: save(entry),
@@ -305,11 +307,11 @@ class CheckList(StackLayout):
             hide(instance)
             hide(instance.check)
             index = stack.children.index(instance)
+            stack.add_widget(delete, index)
+            stack.add_widget(entry, index)
             stack.add_widget(before, index)
             stack.add_widget(replace, index)
             stack.add_widget(after, index)
-            stack.add_widget(entry, index)
-            stack.add_widget(delete, index)
 
         def save(entry):
             todo = 'replace'

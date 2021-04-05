@@ -18,9 +18,6 @@ cd -
 
 ### Build for Android
 ```
-buildozer init
-
-find . -perm 0444 | xargs -r chmod u+w
 buildozer android debug deploy run
 ```
 
@@ -58,4 +55,4 @@ and `/sdcard/Android/data/se.jonaseel.checker/files` on Android. There may also 
 
 ### License
 
-This app is released under a BSD License; see the `LICENSE` file.
+This app and the Kivy library are both released under the MIT License; see the `LICENSE` file.

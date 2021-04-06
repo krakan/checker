@@ -179,6 +179,7 @@ class CheckList(StackLayout):
             if done:
                   label.background_color = settings['doneColor']
                   check.state = 'down'
+            check.type = 'check'
             check.label = label
             label.check = check
             return label
@@ -195,10 +196,7 @@ class CheckList(StackLayout):
 
         def checkSection(stack, current):
             for item in stack.children[::-1]:
-                try:
-                    if item.type != 'item': continue
-                except: continue
-                if item.section == current.section and item.check.state == 'normal':
+                if item.type == 'item' and item.section == current.section and item.check.state == 'normal':
                     return
             hide(current.section)
 
@@ -206,20 +204,18 @@ class CheckList(StackLayout):
         def writeFile(dt):
             shoppingList = []
             for item in stack.children[::-1]:
-                try:
-                    if item.type == 'item':
-                        entry = {
-                            "item": item.text,
-                            "done": item.check.state == 'down'
-                        }
-                        section["items"].append(entry)
-                    else:
-                        section = {
-                            "section": item.origText,
-                            "items": []
-                        }
-                        shoppingList.append(section)
-                except: pass
+                if item.type == 'item':
+                    entry = {
+                        "item": item.text,
+                        "done": item.check.state == 'down'
+                    }
+                    section["items"].append(entry)
+                elif item.type == 'section':
+                    section = {
+                        "section": item.origText,
+                        "items": []
+                    }
+                    shoppingList.append(section)
             self.writeDeferred = False
             now = datetime.now().strftime("%Y%m%d%H%M%S")
             os.rename(f'{dataDir}/Checker.json', f'{dataDir}/Checker-{now}.json')
@@ -257,17 +253,16 @@ class CheckList(StackLayout):
             if instance.state == "down":
                 hasChildren = False
                 for item in stack.children[:]:
-                    if isinstance(item, Button):
-                        try:
-                            if item.check.state == 'down':
-                                hide(item.check)
-                                hide(item)
-                            else:
-                                hasChildren = True
-                        except:
-                            if not hasChildren:
-                                hide(item)
-                            hasChildren = False
+                    if item.type == 'item':
+                        if item.check.state == 'down':
+                            hide(item.check)
+                            hide(item)
+                        else:
+                            hasChildren = True
+                    elif item.type == 'section':
+                        if not hasChildren:
+                            hide(item)
+                        hasChildren = False
             else:
                 for item in stack.children[:]:
                     unhide(item)
@@ -315,6 +310,12 @@ class CheckList(StackLayout):
             entry.replace = replace
             entry.after = after
             entry.delete = delete
+
+            entry.type = 'entry'
+            before.type = 'before'
+            replace.type = 'replace'
+            after.type = 'after'
+            delete.type = 'delete'
 
             hide(instance)
             if instance.type == 'item':

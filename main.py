@@ -48,9 +48,9 @@ from datetime import datetime, timedelta
 # | +------------------------------+ |
 # | +------------------------------+ |
 # | | BoxLayout                    | |
-# | |     +-+ +------+ +---------+ | |
-# | | Hide|x| | Undo | | Save    | | |
-# | |     +-+ +------+ +---------+ | |
+# | |     +-+ +------+       +---+ | |
+# | | Hide|x| | Undo | Filter|   | | |
+# | |     +-+ +------+       +---+ | |
 # | +------------------------------+ |
 # +----------------------------------+
 
@@ -137,7 +137,8 @@ class CheckList(StackLayout):
                 os.remove(backup)
 
         def hide(widget):
-            widget.restore = widget.height
+            if widget.height:
+                widget.restore = widget.height
             widget.height = 0
             widget.opacity = 0
             widget.disabled = True
@@ -419,10 +420,15 @@ class CheckList(StackLayout):
                 size_hint=(1, 1),
             ))
         buttons.add_widget(
-            Button(
-                text="Quit",
-                on_release=exit,
-                size_hint=(1, 1),
+            Label(
+                text="Filter:",
+                size_hint=(None, 1)
+            ))
+        buttons.add_widget(
+            TextInput(
+                size_hint = (1, 1),
+                multiline = False,
+                on_text_validate = lambda w: save(w),
             ))
 
 class Checker(App):

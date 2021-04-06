@@ -162,7 +162,7 @@ class CheckList(StackLayout):
             label.type = 'section'
             return label
 
-        def itemButtonPair(text, done, section):
+        def itemButtonPair(text, done):
             label = LongpressButton(
                 text = text,
                 height = settings['labelSize'],
@@ -170,7 +170,6 @@ class CheckList(StackLayout):
                 on_short_press = lambda w: toggle(w),
                 on_long_press = lambda w: edit(w),
             )
-            label.section = section
             label.type = 'item'
             check = CheckBox(
                 height = settings['labelSize'],
@@ -191,15 +190,23 @@ class CheckList(StackLayout):
                 sectionLabel = sectionButton(section['section'])
                 stack.add_widget(sectionLabel)
                 for item in section['items']:
-                    label = itemButtonPair(item['item'], item['done'], sectionLabel)
+                    label = itemButtonPair(item['item'], item['done'])
                     stack.add_widget(label.check)
                     stack.add_widget(label)
 
         def checkSection(stack, current):
             for item in stack.children[::-1]:
-                if item.type == 'item' and item.section == current.section and item.check.state == 'normal':
+                if item.type == 'section':
+                    section = item
+                if item == current:
+                    break
+            index = stack.children.index(section)
+            for item in stack.children[index-1::-1]:
+                if item.type == 'item' and item.check.state == 'normal':
                     return
-            hide(current.section)
+                if item.type == 'section':
+                    break
+            hide(section)
 
         self.writeDeferred = False
         def writeFile(dt):
@@ -281,38 +288,46 @@ class CheckList(StackLayout):
             )
             if instance.type == 'section':
                 entry.text = instance.origText
+            relative = Button(
+                text = '<>',
+                height = settings['labelSize'],
+                size_hint = (0.1, None),
+                on_press = lambda w: save(entry),
+            )
             before = Button(
                 text = '^',
                 height = settings['labelSize'],
-                size_hint = (0.125, None),
+                size_hint = (0.1, None),
                 on_press = lambda w: save(entry),
             )
             replace = Button(
                 text = 'o',
                 height = settings['labelSize'],
-                size_hint = (0.125, None),
+                size_hint = (0.1, None),
                 on_press = lambda w: save(entry),
             )
             after = Button(
                 text = 'v',
                 height = settings['labelSize'],
-                size_hint = (0.125, None),
+                size_hint = (0.1, None),
                 on_press = lambda w: save(entry),
             )
             delete = Button(
                 text = 'x',
                 background_color = [1, 0, 0, 1],
                 height = settings['labelSize'],
-                size_hint = (0.125, None),
+                size_hint = (0.1, None),
                 on_press = lambda w: save(entry),
             )
             entry.orig = instance
+            entry.relative = relative
             entry.before = before
             entry.replace = replace
             entry.after = after
             entry.delete = delete
 
             entry.type = 'entry'
+            relative.type = 'relative'
             before.type = 'before'
             replace.type = 'replace'
             after.type = 'after'
@@ -324,6 +339,7 @@ class CheckList(StackLayout):
             index = stack.children.index(instance)
             stack.add_widget(delete, index)
             stack.add_widget(entry, index)
+            stack.add_widget(relative, index)
             stack.add_widget(before, index)
             stack.add_widget(replace, index)
             stack.add_widget(after, index)
@@ -336,9 +352,16 @@ class CheckList(StackLayout):
                 todo = 'before'
             elif entry.after.state == 'down':
                 todo = 'after'
+            elif entry.relative.state == 'down':
+                if entry.orig.type == 'section':
+                    todo = 'item'
+                else:
+                    todo = 'section'
+
             orig = entry.orig
             text = entry.text
 
+            stack.remove_widget(entry.relative)
             stack.remove_widget(entry.before)
             stack.remove_widget(entry.replace)
             stack.remove_widget(entry.after)
@@ -353,26 +376,29 @@ class CheckList(StackLayout):
                 unhide(orig)
                 if orig.type == 'item':
                     unhide(orig.check)
-                if todo == 'before' or todo == 'after':
-                    if orig.type == 'section':
-                        label = sectionButton(text)
-                    else:
-                        label = itemButtonPair(text, orig.check.state == 'down', orig.section)
-
-                    index = stack.children.index(orig)
-                    if todo == 'before':
-                        index += 1
-                    if orig.type == 'item':
-                        if todo == 'before':
-                            index += 1
-                        stack.add_widget(label.check, index)
-                    stack.add_widget(label, index)
-                else:
+                if todo == 'replace':
                     if orig.type == 'section':
                         orig.origText = text
                         orig.text = text.upper()
                     else:
                         orig.text = text
+                else:
+                    if orig.type == 'section' and todo != 'item' or todo == 'section':
+                        label = sectionButton(text)
+                    elif orig.type == 'item':
+                        label = itemButtonPair(text, orig.check.state == 'down')
+                    else:
+                        label = itemButtonPair(text, False)
+
+                    index = stack.children.index(orig)
+                    if todo == 'before' or todo == 'section':
+                        index += 1
+                    if orig.type == 'item':
+                        if todo == 'before' or todo == 'section':
+                            index += 1
+                    if label.type == 'item':
+                        stack.add_widget(label.check, index)
+                    stack.add_widget(label, index)
 
             writeFile(1)
 

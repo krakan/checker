@@ -10,6 +10,7 @@ from kivy.uix.stacklayout import StackLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.boxlayout import BoxLayout
 
+from kivy.uix.behaviors import ToggleButtonBehavior
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.textinput import TextInput
 from kivy.uix.checkbox import CheckBox
@@ -53,9 +54,31 @@ from datetime import datetime, timedelta
 # | +------------------------------+ |
 # +----------------------------------+
 
+class ToggleImageButton(ToggleButtonBehavior, Image):
+    image_normal = Factory.StringProperty('atlas://data/images/defaulttheme/checkbox_off')
+    image_down = Factory.StringProperty('atlas://data/images/defaulttheme/checkbox_on')
+    color_normal = Factory.ListProperty([1, 1, 1, 1])
+    color_down = Factory.ListProperty([.2, .7, .9, 1])
+
+    def __init__(self, **kwargs):
+        super(ToggleImageButton, self).__init__(**kwargs)
+        self.source = self.image_normal
+        self.color = self.color_normal
+
+    def on_state(self, widget, value):
+        if value == 'down':
+            self.source = self.image_down
+            self.color = self.color_down
+        else:
+            self.source = self.image_normal
+            self.color = self.color_normal
+
 class ImageButton(ButtonBehavior, Image):
     color_normal = Factory.ListProperty([0, 0, 0, 0])
     color_down = Factory.ListProperty([.2, .7, .9, 1])
+
+    def action(self):
+        pass
 
     def __init__(self, **kwargs):
         super(ImageButton, self).__init__(**kwargs)
@@ -448,16 +471,14 @@ class CheckList(StackLayout):
             size_hint=(1, .05)
         )
         self.add_widget(buttons)
-        buttons.add_widget(
-            Image(
-                source = "data/hide.png",
-                color = [1, 1, 1, .6],
-                size_hint = (None, 1)
-            ))
-        self.hide = CheckBox(
-                on_release=hideUnHide,
-                size_hint=(None, 1),
-            )
+        self.hide = ToggleImageButton(
+            image_down = "data/hide.png",
+            image_normal = "data/show.png",
+            color_down = [1, 1, 1, .5],
+            color_normal = [1, 1, 1, 1],
+            size_hint = (1, 1),
+            on_release = hideUnHide,
+        )
         buttons.add_widget(self.hide)
         buttons.add_widget(
             ImageButton(
@@ -468,9 +489,9 @@ class CheckList(StackLayout):
             ))
         buttons.add_widget(
             Image(
-                color=[1, 1, 1, .6],
-                source='data/search.png',
-                size_hint=(None, 1)
+                color = [1, 1, 1, .6],
+                source = 'data/search.png',
+                size_hint = (1, 1)
             ))
         buttons.add_widget(
             TextInput(

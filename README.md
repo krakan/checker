@@ -2,6 +2,11 @@
 
 A simple cross platform checklist app.
 
+### Why
+
+In spite of trying out a number of existing apps, I've failed to find one that works the way I
+would like and that isn't too buggy.
+
 ### Download and install prerequisites
 
 ```
@@ -21,10 +26,15 @@ cd -
 buildozer android debug deploy run
 ```
 
-### Install an already built app with ADB
+#### Install an already built app with ADB
 ```
 adb install bin/checker-0.1-armeabi-v7a-debug.apk
 ```
+
+### Build for iOS
+
+This should work but hasn't been tested. See
+https://kivy.org/doc/stable/guide/packaging-ios.html
 
 ### Data format
 
@@ -49,9 +59,9 @@ adb install bin/checker-0.1-armeabi-v7a-debug.apk
             ]
 ```
 
-The data file is named `Checker.json` and should be in `$HOME.config/Checker/` on Linux
-and `/sdcard/Android/data/se.jonaseel.checker/files` on Android. There may also be a
-`settings.json` in the same directory.
+The data file is named `Checker.json` and should be in `$HOME/.config/Checker/` on Linux and
+`/sdcard/Android/data/se.jonaseel.checker/files` on Android. There may also be a
+`settings.json` in the same directory. The data file location on iOS needs to be decided.
 
 ### License
 

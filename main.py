@@ -10,17 +10,16 @@ from kivy.uix.stacklayout import StackLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.boxlayout import BoxLayout
 
+from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.textinput import TextInput
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.button import Button
+from kivy.uix.image import Image
 from kivy.uix.label import Label
 
-import os
-import sys
-import json
+import os, sys, json
 from glob import glob
 from datetime import datetime, timedelta
-
 
 # +----------------------------------+
 # | StackLayout                      |
@@ -53,6 +52,22 @@ from datetime import datetime, timedelta
 # | |     +-+ +------+       +---+ | |
 # | +------------------------------+ |
 # +----------------------------------+
+
+class ImageButton(ButtonBehavior, Image):
+    color_normal = Factory.ListProperty([0, 0, 0, 0])
+    color_down = Factory.ListProperty([.2, .7, .9, 1])
+
+    def __init__(self, **kwargs):
+        super(ImageButton, self).__init__(**kwargs)
+        self.color = self.color_normal
+        self.stretch = True
+        self.always_release = True
+
+    def on_press(self):
+        self.color = self.color_down
+
+    def on_release(self):
+        self.color = self.color_normal
 
 class LongpressButton(Factory.Button):
     __events__ = ('on_long_press', 'on_short_press')
@@ -288,36 +303,40 @@ class CheckList(StackLayout):
             )
             if instance.type == 'section':
                 entry.text = instance.origText
-            relative = Button(
-                text = '<>',
+            relative = ImageButton(
+                source = 'data/left.png' if instance.type == 'item' else 'data/right.png',
+                color_normal = [1, 1, 1, .7],
                 height = settings['labelSize'],
                 size_hint = (0.1, None),
-                on_press = lambda w: save(entry),
+                on_release = lambda w: save(entry),
             )
-            before = Button(
-                text = '^',
+            before = ImageButton(
+                source = 'data/up.png',
+                color_normal = [1, 1, 1, .7],
                 height = settings['labelSize'],
                 size_hint = (0.1, None),
-                on_press = lambda w: save(entry),
+                on_release = lambda w: save(entry),
             )
-            replace = Button(
-                text = 'o',
+            replace = ImageButton(
+                source = 'data/ok.png',
+                color_normal = [0, .5, 0, 1],
                 height = settings['labelSize'],
                 size_hint = (0.1, None),
-                on_press = lambda w: save(entry),
+                on_release = lambda w: save(entry),
             )
-            after = Button(
-                text = 'v',
+            after = ImageButton(
+                source = 'data/down.png',
+                color_normal = [1, 1, 1, .7],
                 height = settings['labelSize'],
                 size_hint = (0.1, None),
-                on_press = lambda w: save(entry),
+                on_release = lambda w: save(entry),
             )
-            delete = Button(
-                text = 'x',
-                background_color = [1, 0, 0, 1],
+            delete = ImageButton(
+                source = 'data/delete.png',
+                color_normal = [.5, 0, 0, 1],
                 height = settings['labelSize'],
                 size_hint = (0.1, None),
-                on_press = lambda w: save(entry),
+                on_release = lambda w: save(entry),
             )
             entry.orig = instance
             entry.relative = relative
@@ -430,9 +449,10 @@ class CheckList(StackLayout):
         )
         self.add_widget(buttons)
         buttons.add_widget(
-            Label(
-                text="Hide:",
-                size_hint=(None, 1)
+            Image(
+                source = "data/hide.png",
+                color = [1, 1, 1, .6],
+                size_hint = (None, 1)
             ))
         self.hide = CheckBox(
                 on_release=hideUnHide,
@@ -440,14 +460,16 @@ class CheckList(StackLayout):
             )
         buttons.add_widget(self.hide)
         buttons.add_widget(
-            Button(
-                text="Undo",
-                on_release=undo,
-                size_hint=(1, 1),
+            ImageButton(
+                source = 'data/undo.png',
+                color_normal = [.5, 0, 0, 1],
+                size_hint = (1, 1),
+                on_release = undo,
             ))
         buttons.add_widget(
-            Label(
-                text="Filter:",
+            Image(
+                color=[1, 1, 1, .6],
+                source='data/search.png',
                 size_hint=(None, 1)
             ))
         buttons.add_widget(

@@ -18,7 +18,7 @@ from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.uix.label import Label
 
-import os, sys, json
+import os, sys, json, re
 from glob import glob
 from datetime import datetime, timedelta
 
@@ -248,6 +248,7 @@ class CheckList(StackLayout):
 
         self.writeDeferred = False
         def writeFile(dt):
+            self.writeDeferred = False
             shoppingList = []
             for item in stack.children[::-1]:
                 if item.type == 'item':
@@ -262,7 +263,6 @@ class CheckList(StackLayout):
                         "items": []
                     }
                     shoppingList.append(section)
-            self.writeDeferred = False
             now = datetime.now().strftime("%Y%m%d%H%M%S")
             os.rename(f'{dataDir}/Checker.json', f'{dataDir}/Checker-{now}.json')
             with open(f'{dataDir}/Checker.json', 'w', encoding='utf8') as fd:
@@ -296,22 +296,46 @@ class CheckList(StackLayout):
                 checkSection(stack, instance)
 
         def hideUnHide(instance):
-            if instance.state == "down":
+            if self.hide.state != "down" and not search.text:
+                for item in stack.children[:]:
+                    unhide(item)
+
+            elif search.text == search.text.upper() and search.text != search.text.lower():
+                activeSection = False
+                for item in stack.children[::-1]:
+                    if item.type == 'section':
+                        if re.match(search.text, item.text):
+                            activeSection = True
+                        else:
+                            activeSection = False
+                    if activeSection and (
+                            self.hide.state != 'down' or
+                            item.type != 'item' and item.type != 'check' or
+                            self.hide.state == 'down' and item.type == 'check' and item.state != 'down' or
+                            self.hide.state == 'down' and item.type == 'item' and item.check.state != 'down'
+                    ):
+                        unhide(item)
+                    else:
+                        hide(item)
+
+            else:
                 hasChildren = False
+                regexp = search.text if search.text else '.'
                 for item in stack.children[:]:
                     if item.type == 'item':
-                        if item.check.state == 'down':
+                        if self.hide.state == "down" and item.check.state == 'down' or not re.match(regexp, item.text, re.IGNORECASE):
                             hide(item.check)
                             hide(item)
                         else:
+                            unhide(item.check)
+                            unhide(item)
                             hasChildren = True
                     elif item.type == 'section':
-                        if not hasChildren:
+                        if hasChildren:
+                            unhide(item)
+                            hasChildren = False
+                        else:
                             hide(item)
-                        hasChildren = False
-            else:
-                for item in stack.children[:]:
-                    unhide(item)
 
         def crossCheck(instance):
             toggle(instance.label)
@@ -444,6 +468,17 @@ class CheckList(StackLayout):
 
             writeFile(1)
 
+        self.searchDeferred = False
+        def doSearch(text, undo):
+            if not self.searchDeferred:
+                self.searchDeferred = True
+                Clock.schedule_once(filterOut, 1)
+            return text
+
+        def filterOut(dt):
+            self.searchDeferred = False
+            hideUnHide(self.hide)
+
         # MAIN
 
         title = Label(
@@ -476,7 +511,7 @@ class CheckList(StackLayout):
             image_normal = "data/show.png",
             color_down = [1, 1, 1, .5],
             color_normal = [1, 1, 1, 1],
-            size_hint = (1, 1),
+            size_hint = (.2, 1),
             on_release = hideUnHide,
         )
         buttons.add_widget(self.hide)
@@ -484,21 +519,22 @@ class CheckList(StackLayout):
             ImageButton(
                 source = 'data/undo.png',
                 color_normal = [.5, 0, 0, 1],
-                size_hint = (1, 1),
+                size_hint = (.2, 1),
                 on_release = undo,
             ))
         buttons.add_widget(
             Image(
                 color = [1, 1, 1, .6],
                 source = 'data/search.png',
-                size_hint = (1, 1)
+                size_hint = (.1, 1)
             ))
-        buttons.add_widget(
-            TextInput(
-                size_hint = (1, 1),
-                multiline = False,
-                on_text_validate = lambda w: save(w),
-            ))
+        search = TextInput(
+            size_hint = (.5, 1),
+            multiline = False,
+            input_filter = doSearch,
+            on_text_validate = lambda w: hideUnHide(self.hide),
+        )
+        buttons.add_widget(search)
 
 class Checker(App):
 

@@ -22,6 +22,9 @@ import os, sys, json, re
 from glob import glob
 from datetime import datetime, timedelta
 
+from kivy.core.window import Window
+Window.softinput_mode = 'below_target'
+
 # +----------------------------------+
 # | StackLayout                      |
 # | +------------------------------+ |
@@ -58,7 +61,8 @@ class ToggleImageButton(ToggleButtonBehavior, Image):
     image_normal = Factory.StringProperty('atlas://data/images/defaulttheme/checkbox_off')
     image_down = Factory.StringProperty('atlas://data/images/defaulttheme/checkbox_on')
     color_normal = Factory.ListProperty([1, 1, 1, 1])
-    color_down = Factory.ListProperty([.2, .7, .9, 1])
+    color_down = Factory.ListProperty([1, 1, 1, .6])
+    color_active = Factory.ListProperty([.2, .7, .9, 1])
 
     def __init__(self, **kwargs):
         super(ToggleImageButton, self).__init__(**kwargs)
@@ -68,9 +72,15 @@ class ToggleImageButton(ToggleButtonBehavior, Image):
     def on_state(self, widget, value):
         if value == 'down':
             self.source = self.image_down
-            self.color = self.color_down
+            self.color = self.color_active
         else:
             self.source = self.image_normal
+            self.color = self.color_active
+
+    def on_release(self):
+        if self.state == 'down':
+            self.color = self.color_down
+        else:
             self.color = self.color_normal
 
 class ImageButton(ButtonBehavior, Image):
@@ -124,6 +134,7 @@ class CheckList(StackLayout):
             dataDir = os.environ['HOME'] + '/.config/Checker'
         else:
             dataDir = '/sdcard/Android/data/se.jonaseel.checker/files'
+        os.makedirs(dataDir, exist_ok=True)
 
         try:
             with open(dataDir + '/Checker.json') as fd:
@@ -187,51 +198,6 @@ class CheckList(StackLayout):
                 widget.opacity = 1
                 widget.disabled = False
 
-        def sectionButton(text):
-            label = LongpressButton(
-                text = text.upper(),
-                font_size = settings['sectionTextSize'],
-                height = settings['sectionSize'],
-                background_color = settings['sectionColor'],
-                size_hint = (1, None),
-                on_long_press = lambda w: edit(w),
-            )
-            label.origText = text
-            label.type = 'section'
-            return label
-
-        def itemButtonPair(text, done):
-            label = LongpressButton(
-                text = text,
-                height = settings['labelSize'],
-                size_hint = (0.95, None),
-                on_short_press = lambda w: toggle(w),
-                on_long_press = lambda w: edit(w),
-            )
-            label.type = 'item'
-            check = CheckBox(
-                height = settings['labelSize'],
-                size_hint = (0.05, None),
-                on_release = lambda w: crossCheck(w),
-            )
-            if done:
-                  label.background_color = settings['doneColor']
-                  check.state = 'down'
-            check.type = 'check'
-            check.label = label
-            label.check = check
-            return label
-
-        def populate(stack, shoppingList):
-            stack.clear_widgets()
-            for section in shoppingList:
-                sectionLabel = sectionButton(section['section'])
-                stack.add_widget(sectionLabel)
-                for item in section['items']:
-                    label = itemButtonPair(item['item'], item['done'])
-                    stack.add_widget(label.check)
-                    stack.add_widget(label)
-
         def checkSection(stack, current):
             for item in stack.children[::-1]:
                 if item.type == 'section':
@@ -264,7 +230,8 @@ class CheckList(StackLayout):
                     }
                     shoppingList.append(section)
             now = datetime.now().strftime("%Y%m%d%H%M%S")
-            os.rename(f'{dataDir}/Checker.json', f'{dataDir}/Checker-{now}.json')
+            if os.path.exists(f'{dataDir}/Checker.json'):
+                os.rename(f'{dataDir}/Checker.json', f'{dataDir}/Checker-{now}.json')
             with open(f'{dataDir}/Checker.json', 'w', encoding='utf8') as fd:
                 json.dump(shoppingList, fd, indent=2, ensure_ascii=False)
 
@@ -275,7 +242,7 @@ class CheckList(StackLayout):
                 with open(dataDir + '/Checker.json') as fd:
                         shoppingList=json.load(fd)
                 populate(stack, shoppingList)
-                hideUnHide(self.hide)
+                hideUnHide(hideBtn)
             except: pass
 
         def toggle(instance):
@@ -290,13 +257,13 @@ class CheckList(StackLayout):
                 self.writeDeferred = True
                 Clock.schedule_once(writeFile, 1)
 
-            if self.hide.state == 'down' and instance.check.state == 'down':
+            if hideBtn.state == 'down' and instance.check.state == 'down':
                 hide(instance.check)
                 hide(instance)
                 checkSection(stack, instance)
 
         def hideUnHide(instance):
-            if self.hide.state != "down" and not search.text:
+            if hideBtn.state != "down" and not search.text:
                 for item in stack.children[:]:
                     unhide(item)
 
@@ -304,15 +271,15 @@ class CheckList(StackLayout):
                 activeSection = False
                 for item in stack.children[::-1]:
                     if item.type == 'section':
-                        if re.match(search.text, item.text):
+                        if re.search(search.text, item.text):
                             activeSection = True
                         else:
                             activeSection = False
                     if activeSection and (
-                            self.hide.state != 'down' or
+                            hideBtn.state != 'down' or
                             item.type != 'item' and item.type != 'check' or
-                            self.hide.state == 'down' and item.type == 'check' and item.state != 'down' or
-                            self.hide.state == 'down' and item.type == 'item' and item.check.state != 'down'
+                            hideBtn.state == 'down' and item.type == 'check' and item.state != 'down' or
+                            hideBtn.state == 'down' and item.type == 'item' and item.check.state != 'down'
                     ):
                         unhide(item)
                     else:
@@ -323,7 +290,7 @@ class CheckList(StackLayout):
                 regexp = search.text if search.text else '.'
                 for item in stack.children[:]:
                     if item.type == 'item':
-                        if self.hide.state == "down" and item.check.state == 'down' or not re.match(regexp, item.text, re.IGNORECASE):
+                        if hideBtn.state == "down" and item.check.state == 'down' or not re.search(regexp, item.text, re.IGNORECASE):
                             hide(item.check)
                             hide(item)
                         else:
@@ -477,11 +444,58 @@ class CheckList(StackLayout):
 
         def filterOut(dt):
             self.searchDeferred = False
-            hideUnHide(self.hide)
+            hideUnHide(hideBtn)
+
+        # Widgets
+
+        def sectionButton(text):
+            label = LongpressButton(
+                text = text.upper(),
+                font_size = settings['sectionTextSize'],
+                height = settings['sectionSize'],
+                background_color = settings['sectionColor'],
+                size_hint = (1, None),
+                on_long_press = lambda w: edit(w),
+            )
+            label.origText = text
+            label.type = 'section'
+            return label
+
+        def itemButtonPair(text, done):
+            label = LongpressButton(
+                text = text,
+                height = settings['labelSize'],
+                size_hint = (0.95, None),
+                on_short_press = lambda w: toggle(w),
+                on_long_press = lambda w: edit(w),
+            )
+            label.type = 'item'
+            check = CheckBox(
+                height = settings['labelSize'],
+                size_hint = (0.05, None),
+                on_release = lambda w: crossCheck(w),
+            )
+            if done:
+                  label.background_color = settings['doneColor']
+                  check.state = 'down'
+            check.type = 'check'
+            check.label = label
+            label.check = check
+            return label
+
+        def populate(stack, shoppingList):
+            stack.clear_widgets()
+            for section in shoppingList:
+                sectionLabel = sectionButton(section['section'])
+                stack.add_widget(sectionLabel)
+                for item in section['items']:
+                    label = itemButtonPair(item['item'], item['done'])
+                    stack.add_widget(label.check)
+                    stack.add_widget(label)
 
         # MAIN
 
-        title = Label(
+        title = LongpressButton(
             text='Checker',
             size_hint=(1, .05),
             height = settings['headerSize'],
@@ -506,15 +520,15 @@ class CheckList(StackLayout):
             size_hint=(1, .05)
         )
         self.add_widget(buttons)
-        self.hide = ToggleImageButton(
-            image_down = "data/hide.png",
-            image_normal = "data/show.png",
-            color_down = [1, 1, 1, .5],
-            color_normal = [1, 1, 1, 1],
+        hideBtn = ToggleImageButton(
+            image_down = "data/show.png",
+            image_normal = "data/hide.png",
+            color_down = [1, 1, 1, .9],
+            color_normal = [1, 1, 1, .6],
             size_hint = (.2, 1),
             on_release = hideUnHide,
         )
-        buttons.add_widget(self.hide)
+        buttons.add_widget(hideBtn)
         buttons.add_widget(
             ImageButton(
                 source = 'data/undo.png',
@@ -532,7 +546,7 @@ class CheckList(StackLayout):
             size_hint = (.5, 1),
             multiline = False,
             input_filter = doSearch,
-            on_text_validate = lambda w: hideUnHide(self.hide),
+            on_text_validate = lambda w: hideUnHide(hideBtn),
         )
         buttons.add_widget(search)
 

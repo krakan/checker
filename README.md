@@ -1,4 +1,4 @@
-# Checker
+# Plocka
 
 A simple cross platform checklist app.
 
@@ -28,7 +28,7 @@ buildozer android debug deploy run
 
 #### Install an already built app with ADB
 ```
-adb install bin/checker-0.1-armeabi-v7a-debug.apk
+adb install bin/plocka-1.0-armeabi-v7a-debug.apk
 ```
 
 ### Build for iOS
@@ -59,10 +59,11 @@ https://kivy.org/doc/stable/guide/packaging-ios.html
             ]
 ```
 
-The data file is named `Checker.json` and should be in `$HOME/.config/Checker/` on Linux and
-`/sdcard/Android/data/se.jonaseel.checker/files` on Android. There may also be a
+The data file is named `Plocka.json` and should be in `$HOME/.config/Plocka/` on Linux and
+`/sdcard/Android/data/se.jonaseel.plocka/files` on Android. There may also be a
 `settings.json` in the same directory. The data file location on iOS needs to be decided.
 
 ### License
 
-This app and the Kivy library are both released under the MIT License; see the `LICENSE` file.
+This app, the Kivy library and the icons used are all released under the MIT License; see the
+`LICENSE` file.

@@ -1,5 +1,5 @@
 import kivy
-kivy.require('1.9.0') # replace with your current kivy version !
+kivy.require('1.11.0') # replace with your current kivy version !
 
 from kivy.app import App
 from kivy.base import runTouchApp
@@ -131,13 +131,13 @@ class CheckList(StackLayout):
         super(CheckList, self).__init__(**kwargs)
 
         if 'HOME' in os.environ:
-            dataDir = os.environ['HOME'] + '/.config/Checker'
+            dataDir = os.environ['HOME'] + '/.config/Plocka'
         else:
-            dataDir = '/sdcard/Android/data/se.jonaseel.checker/files'
+            dataDir = '/sdcard/Android/data/se.jonaseel.plocka/files'
         os.makedirs(dataDir, exist_ok=True)
 
         try:
-            with open(dataDir + '/Checker.json') as fd:
+            with open(dataDir + '/Plocka.json') as fd:
                     shoppingList=json.load(fd)
         except:
             shoppingList = [
@@ -178,10 +178,10 @@ class CheckList(StackLayout):
         except:
             settings = defaultSettings
 
-        backups = sorted(glob(f'{dataDir}/Checker-*.json'))
+        backups = sorted(glob(f'{dataDir}/Plocka-*.json'))
         cutoff = (datetime.now() - timedelta(days=settings['maxBackupAge'])).strftime("%Y%m%d%H%M%S")
         for backup in backups[:-settings['backupsToKeep']]:
-            if backup < f'{dataDir}/Checker-{cutoff}.json':
+            if backup < f'{dataDir}/Plocka-{cutoff}.json':
                 print('deleting backup file ' + backup)
                 os.remove(backup)
 
@@ -230,16 +230,16 @@ class CheckList(StackLayout):
                     }
                     shoppingList.append(section)
             now = datetime.now().strftime("%Y%m%d%H%M%S")
-            if os.path.exists(f'{dataDir}/Checker.json'):
-                os.rename(f'{dataDir}/Checker.json', f'{dataDir}/Checker-{now}.json')
-            with open(f'{dataDir}/Checker.json', 'w', encoding='utf8') as fd:
+            if os.path.exists(f'{dataDir}/Plocka.json'):
+                os.rename(f'{dataDir}/Plocka.json', f'{dataDir}/Plocka-{now}.json')
+            with open(f'{dataDir}/Plocka.json', 'w', encoding='utf8') as fd:
                 json.dump(shoppingList, fd, indent=2, ensure_ascii=False)
 
         def undo(instance):
             try:
-                last = sorted(glob(f'{dataDir}/Checker-*.json'))[-1]
-                os.rename(last, f'{dataDir}/Checker.json')
-                with open(dataDir + '/Checker.json') as fd:
+                last = sorted(glob(f'{dataDir}/Plocka-*.json'))[-1]
+                os.rename(last, f'{dataDir}/Plocka.json')
+                with open(dataDir + '/Plocka.json') as fd:
                         shoppingList=json.load(fd)
                 populate(stack, shoppingList)
                 hideUnHide(hideBtn)
@@ -496,7 +496,7 @@ class CheckList(StackLayout):
         # MAIN
 
         title = LongpressButton(
-            text='Checker',
+            text='Plocka',
             size_hint=(1, .05),
             height = settings['headerSize'],
         )
@@ -550,10 +550,10 @@ class CheckList(StackLayout):
         )
         buttons.add_widget(search)
 
-class Checker(App):
+class Plocka(App):
 
     def build(self):
         return CheckList()
 
 if __name__ == '__main__':
-    Checker().run()
+    Plocka().run()

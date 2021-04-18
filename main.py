@@ -24,9 +24,9 @@ from datetime import datetime, timedelta
 
 # +----------------------------------+
 # | StackLayout                      |
-# | +------------------------------+ |
-# | |Label                         | |
-# | +------------------------------+ |
+# | +-------------------+ +--------+ |
+# | |Label              | | Search | |
+# | +-------------------+ +--------+ |
 # | +------------------------------+ |
 # | | ScrollView                   | |
 # | | +----------------------+  ^  | |
@@ -48,9 +48,9 @@ from datetime import datetime, timedelta
 # | +------------------------------+ |
 # | +------------------------------+ |
 # | | BoxLayout                    | |
-# | |     +-+ +------+       +---+ | |
-# | | Hide|x| | Undo | Filter|   | | |
-# | |     +-+ +------+       +---+ | |
+# | | +------+ +------+            | |
+# | | | Hide | | Undo |            | |
+# | | +------+ +------+            | |
 # | +------------------------------+ |
 # +----------------------------------+
 
@@ -162,6 +162,7 @@ class CheckList(StackLayout):
             'sectionColor': [0,.5,0,1],
             'sectionTextSize': '10sp',
             'labelSize': '30sp',
+            'itemColor': [0, 1, 0, 0.3],
             'doneColor': [0, 1, 0, 1],
             'backupsToKeep': 10,
             'maxBackupAge': 1,
@@ -244,7 +245,7 @@ class CheckList(StackLayout):
 
         def toggle(instance):
             if instance.check.state == 'down':
-                instance.background_color = [1,1,1,1]
+                instance.background_color = settings['itemColor']
                 instance.check.state = 'normal'
             else:
                 instance.background_color = settings['doneColor']
@@ -462,6 +463,7 @@ class CheckList(StackLayout):
             label = LongpressButton(
                 text = text,
                 height = settings['labelSize'],
+                background_color = settings['itemColor'],
                 size_hint = (0.95, None),
                 on_short_press = lambda w: toggle(w),
                 on_long_press = lambda w: edit(w),
@@ -511,7 +513,7 @@ class CheckList(StackLayout):
             text='Plocka',
             size_hint=(0.9, .05),
             height = settings['headerSize'],
-            background_color = [0, 0, 0, 1],
+            background_color = [0, 1, 0, 0.5],
         )
         self.add_widget(title)
 
@@ -524,15 +526,13 @@ class CheckList(StackLayout):
         )
         self.add_widget(searchBtn)
         searchInput = TextInput(
-                size_hint = (0, 0),
-                multiline = False,
-                input_filter = doSearch,
-                on_text_validate = lambda w: hideUnHide(hideBtn),
-            )
-        #searchInput.restore = searchInput.width
-        #searchInput.width = 0
-        searchInput.opacity = 0
-        searchInput.disabled = True
+            size_hint = (0, 0),
+            opacity = 0,
+            disabled = True,
+            multiline = False,
+            input_filter = doSearch,
+            on_text_validate = lambda w: hideUnHide(hideBtn),
+        )
         self.add_widget(searchInput)
 
         scrollBox = ScrollView(

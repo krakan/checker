@@ -22,9 +22,6 @@ import os, sys, json, re
 from glob import glob
 from datetime import datetime, timedelta
 
-from kivy.core.window import Window
-Window.softinput_mode = 'below_target'
-
 # +----------------------------------+
 # | StackLayout                      |
 # | +------------------------------+ |
@@ -263,15 +260,15 @@ class CheckList(StackLayout):
                 checkSection(stack, instance)
 
         def hideUnHide(instance):
-            if hideBtn.state != "down" and not search.text:
+            if hideBtn.state != "down" and not searchInput.text:
                 for item in stack.children[:]:
                     unhide(item)
 
-            elif search.text == search.text.upper() and search.text != search.text.lower():
+            elif searchInput.text == searchInput.text.upper() and searchInput.text != searchInput.text.lower():
                 activeSection = False
                 for item in stack.children[::-1]:
                     if item.type == 'section':
-                        if re.search(search.text, item.text):
+                        if re.search(searchInput.text, item.text):
                             activeSection = True
                         else:
                             activeSection = False
@@ -287,7 +284,7 @@ class CheckList(StackLayout):
 
             else:
                 hasChildren = False
-                regexp = search.text if search.text else '.'
+                regexp = searchInput.text if searchInput.text else '.'
                 for item in stack.children[:]:
                     if item.type == 'item':
                         if hideBtn.state == "down" and item.check.state == 'down' or not re.search(regexp, item.text, re.IGNORECASE):
@@ -493,14 +490,50 @@ class CheckList(StackLayout):
                     stack.add_widget(label.check)
                     stack.add_widget(label)
 
+        def toggleSearch(widget):
+            if searchInput.disabled:
+                title.size_hint = (.4, .05)
+                searchInput.size_hint = (0.5, 0.05)
+                searchInput.opacity = 1
+                searchInput.disabled = False
+                searchInput.focused = True
+            else:
+                searchInput.text = ''
+                searchInput.size_hint = (0, 0)
+                searchInput.opacity = 0
+                searchInput.disabled = True
+                title.size_hint = (.9, .05)
+                hideUnHide(hideBtn)
+
         # MAIN
 
         title = LongpressButton(
             text='Plocka',
-            size_hint=(1, .05),
+            size_hint=(0.9, .05),
             height = settings['headerSize'],
+            background_color = [0, 0, 0, 1],
         )
         self.add_widget(title)
+
+        searchBtn = ImageButton(
+            source = 'data/search.png',
+            color_normal = [1, 1, 1, .6],
+            size_hint=(0.1, 0.05),
+            height = settings['headerSize'],
+            on_release = toggleSearch,
+        )
+        self.add_widget(searchBtn)
+        searchInput = TextInput(
+                size_hint = (0, 0),
+                multiline = False,
+                input_filter = doSearch,
+                on_text_validate = lambda w: hideUnHide(hideBtn),
+            )
+        #searchInput.restore = searchInput.width
+        #searchInput.width = 0
+        searchInput.opacity = 0
+        searchInput.disabled = True
+        self.add_widget(searchInput)
 
         scrollBox = ScrollView(
             size_hint=(1, .9),
@@ -536,19 +569,6 @@ class CheckList(StackLayout):
                 size_hint = (.2, 1),
                 on_release = undo,
             ))
-        buttons.add_widget(
-            Image(
-                color = [1, 1, 1, .6],
-                source = 'data/search.png',
-                size_hint = (.1, 1)
-            ))
-        search = TextInput(
-            size_hint = (.5, 1),
-            multiline = False,
-            input_filter = doSearch,
-            on_text_validate = lambda w: hideUnHide(hideBtn),
-        )
-        buttons.add_widget(search)
 
 class Plocka(App):
 

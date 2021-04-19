@@ -5,6 +5,7 @@ from kivy.app import App
 from kivy.base import runTouchApp
 from kivy.factory import Factory
 from kivy.clock import Clock
+from kivy.utils import platform
 
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.scrollview import ScrollView
@@ -18,7 +19,7 @@ from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.uix.label import Label
 
-import os, sys, json, re
+import os, sys, json, re, time
 from glob import glob
 from datetime import datetime, timedelta
 
@@ -129,10 +130,20 @@ class CheckList(StackLayout):
     def __init__(self, **kwargs):
         super(CheckList, self).__init__(**kwargs)
 
-        if 'HOME' in os.environ:
-            dataDir = os.environ['HOME'] + '/.config/Plocka'
+        if platform == "android":
+            from android.storage import primary_external_storage_path
+            from android.permissions import request_permissions, check_permission, Permission
+
+            sdcard = primary_external_storage_path()
+            dataDir = sdcard + '/Android/data/se.jonaseel.plocka/files'
+
+            if not os.path.exists(dataDir):
+                request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
+                while not check_permission(Permission.WRITE_EXTERNAL_STORAGE):
+                    time.sleep(1)
         else:
-            dataDir = '/sdcard/Android/data/se.jonaseel.plocka/files'
+            dataDir = os.environ['HOME'] + '/.config/Plocka'
+
         os.makedirs(dataDir, exist_ok=True)
 
         try:
@@ -579,3 +590,4 @@ class Plocka(App):
 
 if __name__ == '__main__':
     Plocka().run()
+

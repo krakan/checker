@@ -23,7 +23,7 @@ import os, sys, json, re, time
 from glob import glob
 from datetime import datetime, timedelta
 
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 
 # +----------------------------------+
 # | StackLayout                      |

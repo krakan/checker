@@ -18,12 +18,15 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from kivy.uix.popup import Popup
+from kivy.uix.filechooser import FileChooserListView
 
-import os, sys, json, re, time
+import os, sys, json, re, time, shutil
 from glob import glob
 from datetime import datetime, timedelta
 
-__version__ = '1.1.1'
+__version__ = '1.2.0'
 
 # +----------------------------------+
 # | StackLayout                      |
@@ -106,6 +109,31 @@ class LongpressButton(Factory.Button):
     __events__ = ('on_long_press', 'on_short_press')
 
     long_press_time = Factory.NumericProperty(0.2)
+
+    def on_state(self, instance, value):
+        lpt = self.long_press_time
+        if value == 'down':
+            self._clockev = Clock.schedule_once(self._do_long_press, lpt)
+        else:
+            if self._clockev.is_triggered:
+                self._clockev.cancel()
+                self.dispatch('on_short_press')
+
+    def _do_long_press(self, dt):
+        self.dispatch('on_long_press')
+
+    def on_long_press(self, *largs):
+        pass
+
+    def on_short_press(self, *largs):
+        pass
+
+class LongpressImageButton(Factory.ImageButton):
+    __events__ = ('on_long_press', 'on_short_press')
+
+    long_press_time = Factory.NumericProperty(0.2)
+    color_normal = Factory.ListProperty([0, 0, 0, 0])
+    color_down = Factory.ListProperty([.2, .7, .9, 1])
 
     def on_state(self, instance, value):
         lpt = self.long_press_time
@@ -324,7 +352,7 @@ class CheckList(StackLayout):
                 size_hint = (0.5, None),
                 height = settings['labelSize'],
                 multiline = False,
-                on_text_validate = lambda w: save(w),
+                on_text_validate = lambda w: updateItem(w),
             )
             if instance.type == 'section':
                 entry.text = instance.origText
@@ -333,35 +361,35 @@ class CheckList(StackLayout):
                 color_normal = [1, 1, 1, .7],
                 height = settings['labelSize'],
                 size_hint = (0.1, None),
-                on_release = lambda w: save(entry),
+                on_release = lambda w: updateItem(entry),
             )
             before = ImageButton(
                 source = 'data/up.png',
                 color_normal = [1, 1, 1, .7],
                 height = settings['labelSize'],
                 size_hint = (0.1, None),
-                on_release = lambda w: save(entry),
+                on_release = lambda w: updateItem(entry),
             )
             replace = ImageButton(
                 source = 'data/ok.png',
                 color_normal = [0, .5, 0, 1],
                 height = settings['labelSize'],
                 size_hint = (0.1, None),
-                on_release = lambda w: save(entry),
+                on_release = lambda w: updateItem(entry),
             )
             after = ImageButton(
                 source = 'data/down.png',
                 color_normal = [1, 1, 1, .7],
                 height = settings['labelSize'],
                 size_hint = (0.1, None),
-                on_release = lambda w: save(entry),
+                on_release = lambda w: updateItem(entry),
             )
             delete = ImageButton(
                 source = 'data/delete.png',
                 color_normal = [.5, 0, 0, 1],
                 height = settings['labelSize'],
                 size_hint = (0.1, None),
-                on_release = lambda w: save(entry),
+                on_release = lambda w: updateItem(entry),
             )
             entry.orig = instance
             entry.relative = relative
@@ -388,7 +416,7 @@ class CheckList(StackLayout):
             stack.add_widget(replace, index)
             stack.add_widget(after, index)
 
-        def save(entry):
+        def updateItem(entry):
             todo = 'replace'
             if entry.delete.state == 'down':
                 todo = 'delete'
@@ -456,6 +484,13 @@ class CheckList(StackLayout):
         def filterOut(dt):
             self.searchDeferred = False
             hideUnHide(hideBtn)
+
+        def setBookmark(widget):
+            now = datetime.now().strftime("%Y%m%d%H%M%S")
+            shutil.copy(f'{dataDir}/Plocka.json', f'{dataDir}/Bookmark-{now}.json')
+
+        def getBookmark(widget):
+            print("getBookmark not implemented")
 
         # Widgets
 
@@ -571,17 +606,27 @@ class CheckList(StackLayout):
             image_normal = "data/hide.png",
             color_down = [1, 1, 1, .9],
             color_normal = [1, 1, 1, .6],
-            size_hint = (.2, 1),
+            size_hint = (.3, 1),
             on_release = hideUnHide,
         )
         buttons.add_widget(hideBtn)
-        buttons.add_widget(
-            ImageButton(
-                source = 'data/undo.png',
-                color_normal = [.5, 0, 0, 1],
-                size_hint = (.2, 1),
-                on_release = undo,
-            ))
+
+        undoBtn = ImageButton(
+            source = 'data/undo.png',
+            color_normal = [.5, 0, 0, 1],
+            size_hint = (.3, 1),
+            on_release = undo,
+        )
+        buttons.add_widget(undoBtn)
+
+        bookmarkBtn = LongpressImageButton(
+            source = 'data/bookmark.png',
+            color_normal = [0, 0.5, 0, 1],
+            size_hint = (.3, 1),
+            on_short_press = setBookmark,
+            on_long_press = getBookmark,
+        )
+        buttons.add_widget(bookmarkBtn)
 
 class Plocka(App):
 

@@ -10,8 +10,8 @@ would like and that isn't too buggy.
 ### Download and install prerequisites
 
 ```
-git clone https://github.com/krakan/checker.git
-cd checker
+git clone https://github.com/krakan/plocka.git
+cd plocka
 git clone https://github.com/kivy/buildozer.git
 cd buildozer
 python setup.py install

@@ -107,7 +107,7 @@ class CheckList(StackLayout):
             ]
 
         defaultSettings = {
-            'headerSize': '10sp',
+            'headerSize': '40sp',
             'sectionSize': '20sp',
             'sectionColor': [0,.5,0,1],
             'sectionTextSize': '10sp',
@@ -488,7 +488,7 @@ class CheckList(StackLayout):
 
         title = LongpressButton(
             text='Plocka',
-            size_hint=(0.9, .05),
+            size_hint=(0.9, None),
             height = settings['headerSize'],
             background_color = [0, 1, 0, 0.5],
         )
@@ -527,7 +527,8 @@ class CheckList(StackLayout):
         populate(stack, shoppingList)
 
         buttons = BoxLayout(
-            size_hint=(1, .05)
+            size_hint=(1, None),
+            height = settings['headerSize'],
         )
         self.add_widget(buttons)
         hideBtn = ToggleImageButton(

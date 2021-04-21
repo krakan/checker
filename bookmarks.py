@@ -34,7 +34,7 @@ class BookmarkList(StackLayout):
         super(BookmarkList, self).__init__(**kwargs)
 
         scrollBox = ScrollView(
-            size_hint=(1, .9),
+            size_hint=(1, 0.95),
             do_scroll_x=False,
         )
         self.add_widget(scrollBox)
@@ -58,18 +58,18 @@ class BookmarkList(StackLayout):
                 on_long_press = lambda w: edit(w),
                 on_short_press = lambda w: choose(w.text)
             )
-            #label.origText = text
             stack.add_widget(label)
 
         buttons = BoxLayout(
-            size_hint=(1, .05)
+            size_hint=(1, None)
         )
         self.add_widget(buttons)
 
         cancelBtn = ImageButton(
             source = 'data/undo.png',
             color_normal = [1, 0, 0, 0.5],
-            size_hint = (.3, 1),
+            size_hint = (1, None),
+            height = self.settings['headerSize'],
             on_release = lambda w: self.parent.parent.parent.dismiss(),
         )
         buttons.add_widget(cancelBtn)
@@ -77,3 +77,6 @@ class BookmarkList(StackLayout):
         def choose(text):
             self.chosen = text
             self.parent.parent.parent.dismiss()
+
+        def edit(w):
+            pass

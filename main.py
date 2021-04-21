@@ -19,12 +19,13 @@ from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
-from kivy.uix.popup import Popup
-from kivy.uix.filechooser import FileChooserListView
 
 import os, sys, json, re, time, shutil
 from glob import glob
 from datetime import datetime, timedelta
+
+from bookmarks import BookmarkList
+from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
 __version__ = '1.2.0'
 
@@ -54,104 +55,12 @@ __version__ = '1.2.0'
 # | +------------------------------+ |
 # | +------------------------------+ |
 # | | BoxLayout                    | |
-# | | +------+ +------+            | |
-# | | | Hide | | Undo |            | |
-# | | +------+ +------+            | |
+# | | +------+ +------+ +--------+ | |
+# | | | Hide | | Undo | | Bookm. | | |
+# | | +------+ +------+ =--------+ | |
 # | +------------------------------+ |
 # +----------------------------------+
 
-class ToggleImageButton(ToggleButtonBehavior, Image):
-    image_normal = Factory.StringProperty('atlas://data/images/defaulttheme/checkbox_off')
-    image_down = Factory.StringProperty('atlas://data/images/defaulttheme/checkbox_on')
-    color_normal = Factory.ListProperty([1, 1, 1, 1])
-    color_down = Factory.ListProperty([1, 1, 1, .6])
-    color_active = Factory.ListProperty([.2, .7, .9, 1])
-
-    def __init__(self, **kwargs):
-        super(ToggleImageButton, self).__init__(**kwargs)
-        self.source = self.image_normal
-        self.color = self.color_normal
-
-    def on_state(self, widget, value):
-        if value == 'down':
-            self.source = self.image_down
-            self.color = self.color_active
-        else:
-            self.source = self.image_normal
-            self.color = self.color_active
-
-    def on_release(self):
-        if self.state == 'down':
-            self.color = self.color_down
-        else:
-            self.color = self.color_normal
-
-class ImageButton(ButtonBehavior, Image):
-    color_normal = Factory.ListProperty([0, 0, 0, 0])
-    color_down = Factory.ListProperty([.2, .7, .9, 1])
-
-    def action(self):
-        pass
-
-    def __init__(self, **kwargs):
-        super(ImageButton, self).__init__(**kwargs)
-        self.color = self.color_normal
-        self.stretch = True
-        self.always_release = True
-
-    def on_press(self):
-        self.color = self.color_down
-
-    def on_release(self):
-        self.color = self.color_normal
-
-class LongpressButton(Factory.Button):
-    __events__ = ('on_long_press', 'on_short_press')
-
-    long_press_time = Factory.NumericProperty(0.2)
-
-    def on_state(self, instance, value):
-        lpt = self.long_press_time
-        if value == 'down':
-            self._clockev = Clock.schedule_once(self._do_long_press, lpt)
-        else:
-            if self._clockev.is_triggered:
-                self._clockev.cancel()
-                self.dispatch('on_short_press')
-
-    def _do_long_press(self, dt):
-        self.dispatch('on_long_press')
-
-    def on_long_press(self, *largs):
-        pass
-
-    def on_short_press(self, *largs):
-        pass
-
-class LongpressImageButton(Factory.ImageButton):
-    __events__ = ('on_long_press', 'on_short_press')
-
-    long_press_time = Factory.NumericProperty(0.2)
-    color_normal = Factory.ListProperty([0, 0, 0, 0])
-    color_down = Factory.ListProperty([.2, .7, .9, 1])
-
-    def on_state(self, instance, value):
-        lpt = self.long_press_time
-        if value == 'down':
-            self._clockev = Clock.schedule_once(self._do_long_press, lpt)
-        else:
-            if self._clockev.is_triggered:
-                self._clockev.cancel()
-                self.dispatch('on_short_press')
-
-    def _do_long_press(self, dt):
-        self.dispatch('on_long_press')
-
-    def on_long_press(self, *largs):
-        pass
-
-    def on_short_press(self, *largs):
-        pass
 
 class CheckList(StackLayout):
 
@@ -485,12 +394,32 @@ class CheckList(StackLayout):
             self.searchDeferred = False
             hideUnHide(hideBtn)
 
-        def setBookmark(widget):
-            now = datetime.now().strftime("%Y%m%d%H%M%S")
+        def setBookmark():
+            now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            print(f"set bookmark '{dataDir}/Bookmark-{now}.json'")
             shutil.copy(f'{dataDir}/Plocka.json', f'{dataDir}/Bookmark-{now}.json')
 
-        def getBookmark(widget):
-            print("getBookmark not implemented")
+        bookmark = ''
+        def getBookmark():
+            popup = Popup(
+                title = "Bookmarks",
+                content = BookmarkList(
+                    dataDir = dataDir,
+                    settings = settings,
+                ),
+                size_hint = (0.9, 0.9),
+            )
+            popup.bind(on_pre_dismiss = useBookmark)
+            popup.open()
+
+        def useBookmark(w):
+            bookmark = w.content.chosen
+            if not bookmark:
+                print('no bookmark chosen')
+                return
+            with open(f'{dataDir}/{bookmark}.json') as fd:
+                    shoppingList=json.load(fd)
+            populate(stack, shoppingList)
 
         # Widgets
 
@@ -623,8 +552,8 @@ class CheckList(StackLayout):
             source = 'data/bookmark.png',
             color_normal = [0, 0.5, 0, 1],
             size_hint = (.3, 1),
-            on_short_press = setBookmark,
-            on_long_press = getBookmark,
+            on_short_press = lambda w: setBookmark(),
+            on_long_press = lambda w: getBookmark(),
         )
         buttons.add_widget(bookmarkBtn)
 

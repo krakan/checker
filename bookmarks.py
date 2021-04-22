@@ -1,25 +1,13 @@
 import kivy
 kivy.require('1.11.0') # replace with your current kivy version !
 
-from kivy.app import App
-from kivy.base import runTouchApp
 from kivy.factory import Factory
-from kivy.clock import Clock
-from kivy.utils import platform
 
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.boxlayout import BoxLayout
 
-from kivy.uix.behaviors import ToggleButtonBehavior
-from kivy.uix.behaviors import ButtonBehavior
-from kivy.uix.textinput import TextInput
-from kivy.uix.checkbox import CheckBox
-from kivy.uix.button import Button
-from kivy.uix.image import Image
-from kivy.uix.label import Label
-
-import os, sys, json, re, time
+import os, re
 from glob import glob
 from datetime import datetime, timedelta
 

@@ -3,7 +3,6 @@ kivy.require('1.11.0') # replace with your current kivy version !
 
 from kivy.app import App
 from kivy.base import runTouchApp
-from kivy.factory import Factory
 from kivy.clock import Clock
 from kivy.utils import platform
 
@@ -11,13 +10,8 @@ from kivy.uix.stacklayout import StackLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.boxlayout import BoxLayout
 
-from kivy.uix.behaviors import ToggleButtonBehavior
-from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.textinput import TextInput
 from kivy.uix.checkbox import CheckBox
-from kivy.uix.button import Button
-from kivy.uix.image import Image
-from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 
 import os, sys, json, re, time, shutil
@@ -30,16 +24,15 @@ from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressIm
 __version__ = '1.2.0'
 
 # +----------------------------------+
-# | StackLayout                      |
-# | +-------------------+ +--------+ |
-# | |Label              | | Search | |
-# | +-------------------+ +--------+ |
 # | +------------------------------+ |
-# | | ScrollView                   | |
+# | | +---------------+ +--------+ | |
+# | | | Label         | | Search | | |
+# | | +---------------+ +--------+ | |
+# | +------------------------------+ |
+# | +------------------------------+ |
 # | | +----------------------+  ^  | |
-# | | | StackLayout          | | | | |
 # | | | +------------------+ | | | | |
-# | | | |Label             | | | | | |
+# | | | | Label            | | | | | |
 # | | | +------------------+ | | | | |
 # | | | +-++---------------+ | | | | |
 # | | | |x|| Button        | | | | | |
@@ -48,21 +41,19 @@ __version__ = '1.2.0'
 # | | | |x|| Button        | | | | | |
 # | | | +-++---------------+ | | | | |
 # | | | +------------------+ | | | | |
-# | | | |Label             | | | | | |
+# | | | | Label            | | | | | |
 # | | | +------------------+ | | | | |
 # | | | ...                  | | | | |
 # | | +----------------------+  v  | |
 # | +------------------------------+ |
 # | +------------------------------+ |
-# | | BoxLayout                    | |
 # | | +------+ +------+ +--------+ | |
 # | | | Hide | | Undo | | Bookm. | | |
-# | | +------+ +------+ =--------+ | |
+# | | +------+ +------+ +--------+ | |
 # | +------------------------------+ |
 # +----------------------------------+
 
-
-class CheckList(StackLayout):
+class CheckList(BoxLayout):
 
     def __init__(self, **kwargs):
         super(CheckList, self).__init__(**kwargs)
@@ -471,46 +462,43 @@ class CheckList(StackLayout):
 
         def toggleSearch(widget):
             if searchInput.disabled:
-                title.size_hint = (.4, .05)
-                searchInput.size_hint = (0.5, 0.05)
-                searchInput.opacity = 1
+                top.add_widget(searchInput,1)
                 searchInput.disabled = False
                 searchInput.focused = True
             else:
                 searchInput.text = ''
-                searchInput.size_hint = (0, 0)
-                searchInput.opacity = 0
                 searchInput.disabled = True
-                title.size_hint = (.9, .05)
+                top.remove_widget(searchInput)
                 hideUnHide(hideBtn)
 
         # MAIN
 
+        top = BoxLayout(
+            size_hint=(1, None),
+            height = settings['headerSize'],
+        )
+        self.add_widget(top)
+
         title = LongpressButton(
             text='Plocka',
-            size_hint=(0.9, None),
-            height = settings['headerSize'],
             background_color = [0, 1, 0, 0.5],
         )
-        self.add_widget(title)
+        top.add_widget(title)
 
         searchBtn = ImageButton(
             source = 'data/search.png',
+            width = settings['headerSize'],
             color_normal = [1, 1, 1, .6],
-            size_hint=(0.1, 0.05),
-            height = settings['headerSize'],
             on_release = toggleSearch,
+            size_hint_x = None,
         )
-        self.add_widget(searchBtn)
+        top.add_widget(searchBtn)
         searchInput = TextInput(
-            size_hint = (0, 0),
-            opacity = 0,
             disabled = True,
             multiline = False,
             input_filter = doSearch,
             on_text_validate = lambda w: hideUnHide(hideBtn),
         )
-        self.add_widget(searchInput)
 
         scrollBox = ScrollView(
             size_hint=(1, .9),
@@ -561,7 +549,7 @@ class CheckList(StackLayout):
 class Plocka(App):
 
     def build(self):
-        return CheckList()
+        return CheckList(orientation = 'vertical')
 
 if __name__ == '__main__':
     Plocka().run()

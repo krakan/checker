@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.2.1'
+__version__ = '1.2.2'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -387,8 +387,9 @@ class CheckList(BoxLayout):
 
         def setBookmark():
             now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-            print(f"set bookmark '{dataDir}/Bookmark-{now}.json'")
-            shutil.copy(f'{dataDir}/Plocka.json', f'{dataDir}/Bookmark-{now}.json')
+            os.makedirs(f'{dataDir}/bookmarks', exist_ok=True)
+            print(f"set bookmark '{dataDir}/bookmarks/{now}.json'")
+            shutil.copy(f'{dataDir}/Plocka.json', f'{dataDir}/bookmarks/{now}.json')
 
         bookmark = ''
         def getBookmark():
@@ -397,6 +398,7 @@ class CheckList(BoxLayout):
                 content = BookmarkList(
                     dataDir = dataDir,
                     settings = settings,
+                    orientation = 'vertical',
                 ),
                 size_hint = (0.9, 0.9),
             )
@@ -408,7 +410,9 @@ class CheckList(BoxLayout):
             if not bookmark:
                 print('no bookmark chosen')
                 return
-            with open(f'{dataDir}/{bookmark}.json') as fd:
+            writeFile(1)
+            shutil.copy(f'{dataDir}/bookmarks/{bookmark}.json', f'{dataDir}/Plocka.json')
+            with open(f'{dataDir}/Plocka.json') as fd:
                     shoppingList=json.load(fd)
             populate(stack, shoppingList)
 

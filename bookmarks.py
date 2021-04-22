@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-class BookmarkList(StackLayout):
+class BookmarkList(BoxLayout):
     dataDir = Factory.StringProperty('.')
     settings = Factory.DictProperty({})
     chosen = Factory.StringProperty('')
@@ -22,7 +22,6 @@ class BookmarkList(StackLayout):
         super(BookmarkList, self).__init__(**kwargs)
 
         scrollBox = ScrollView(
-            size_hint=(1, 0.95),
             do_scroll_x=False,
         )
         self.add_widget(scrollBox)
@@ -33,11 +32,9 @@ class BookmarkList(StackLayout):
         )
         scrollBox.add_widget(stack)
 
-        bookmarks = sorted(glob(f'{self.dataDir}/*.json'), key = os.path.getmtime)
+        bookmarks = sorted(glob(f'{self.dataDir}/bookmarks/*.json'), key = os.path.getmtime)
         for filename in bookmarks:
-            if re.search(f'{self.dataDir}/(Plocka.*|settings).json', filename):
-                continue
-            bookmark = filename[len(f'{self.dataDir}/'):-5]
+            bookmark = filename[len(f'{self.dataDir}/bookmarks/'):-5]
             label = LongpressButton(
                 text = bookmark,
                 height = self.settings['labelSize'],
@@ -48,11 +45,6 @@ class BookmarkList(StackLayout):
             )
             stack.add_widget(label)
 
-        buttons = BoxLayout(
-            size_hint=(1, None)
-        )
-        self.add_widget(buttons)
-
         cancelBtn = ImageButton(
             source = 'data/undo.png',
             color_normal = [1, 0, 0, 0.5],
@@ -60,7 +52,7 @@ class BookmarkList(StackLayout):
             height = self.settings['headerSize'],
             on_release = lambda w: self.parent.parent.parent.dismiss(),
         )
-        buttons.add_widget(cancelBtn)
+        self.add_widget(cancelBtn)
 
         def choose(text):
             self.chosen = text

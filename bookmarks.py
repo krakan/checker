@@ -32,7 +32,7 @@ class BookmarkList(BoxLayout):
         )
         scrollBox.add_widget(stack)
 
-        bookmarks = sorted(glob(f'{self.dataDir}/bookmarks/*.json'), key = os.path.getmtime)
+        bookmarks = sorted(glob(f'{self.dataDir}/bookmarks/*.json'), key = os.path.getmtime)[::-1]
         for filename in bookmarks:
             bookmark = filename[len(f'{self.dataDir}/bookmarks/'):-5]
             label = LongpressButton(

@@ -104,7 +104,11 @@ class CheckList(BoxLayout):
             'sectionTextSize': '10sp',
             'labelSize': '30sp',
             'itemColor': [0, 1, 0, 0.3],
+            'inactiveColor': [1, 1, 1, 0.5],
             'doneColor': [0, 1, 0, 1],
+            'actionColor': [.2, .7, .9, 1],
+            'redColor': [1, 0, 0, 0.5],
+            'greenColor': [0, 1, 0, 0.5],
             'backupsToKeep': 10,
             'maxBackupAge': 1,
         }
@@ -315,6 +319,7 @@ class CheckList(BoxLayout):
             stack.add_widget(before, index)
             stack.add_widget(replace, index)
             stack.add_widget(after, index)
+            entry.focused = True
 
         def updateItem(entry):
             todo = 'replace'
@@ -535,7 +540,7 @@ class CheckList(BoxLayout):
 
         undoBtn = ImageButton(
             source = 'data/undo.png',
-            color_normal = [.5, 0, 0, 1],
+            color_normal = settings['redColor'],
             size_hint = (.3, 1),
             on_release = undo,
         )
@@ -543,7 +548,7 @@ class CheckList(BoxLayout):
 
         bookmarkBtn = LongpressImageButton(
             source = 'data/bookmark.png',
-            color_normal = [0, 0.5, 0, 1],
+            color_normal = settings['greenColor'],
             size_hint = (.3, 1),
             on_short_press = lambda w: setBookmark(),
             on_long_press = lambda w: getBookmark(),

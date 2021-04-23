@@ -120,16 +120,12 @@ class BookmarkList(BoxLayout):
             entry.parent.remove_widget(entry)
 
         def updateItem(entry):
+            os.rename(f'{self.dataDir}/bookmarks/{entry.orig.text}.json', f'{self.dataDir}/bookmarks/{entry.text}.json')
             entry.orig.text = entry.text
             stack.add_widget(entry.orig, entry.index)
             remove_widgets(entry.parent)
 
-        def deleteItem(entry):
-            stack.remove_widget(entry.orig)
-            remove_widgets(entry.parent)
-
         def selectItem(entry):
-            entry.orig.text = entry.text
             stack.add_widget(entry.orig, entry.index)
             select(entry.orig)
             remove_widgets(entry.parent)
@@ -146,4 +142,5 @@ class BookmarkList(BoxLayout):
         def deleteSelected():
             for item in stack.children[:]:
                 if item.selected:
+                    os.remove(f'{self.dataDir}/bookmarks/{item.text}.json')
                     stack.remove_widget(item)

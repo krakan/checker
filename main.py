@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.4.0'
+__version__ = '1.4.1'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -181,6 +181,7 @@ class CheckList(BoxLayout):
                 os.rename(f'{dataDir}/Plocka.json', f'{dataDir}/Plocka-{now}.json')
             with open(f'{dataDir}/Plocka.json', 'w', encoding='utf8') as fd:
                 json.dump(shoppingList, fd, indent=2, ensure_ascii=False)
+            saveBtn.color = settings['greenColor']
 
         def undo(instance):
             global shoppingList
@@ -203,6 +204,7 @@ class CheckList(BoxLayout):
 
             if not self.writeDeferred:
                 self.writeDeferred = True
+                saveBtn.color = settings['actionColor']
                 Clock.schedule_once(writeFile, 1)
 
             if hideBtn.state == 'down' and instance.check.state == 'down':
@@ -547,12 +549,18 @@ class CheckList(BoxLayout):
             height = settings['headerSize'],
         )
         self.add_widget(buttons)
+        saveBtn = ImageButton(
+            source = "data/ok.png",
+            color_normal = settings['greenColor'],
+            on_release = lambda x: writeFile(1),
+        )
+        buttons.add_widget(saveBtn)
+
         hideBtn = ToggleImageButton(
             image_down = "data/show.png",
             image_normal = "data/hide.png",
             color_down = [1, 1, 1, .9],
             color_normal = [1, 1, 1, .6],
-            size_hint = (.3, 1),
             on_release = hideUnHide,
         )
         buttons.add_widget(hideBtn)
@@ -560,7 +568,6 @@ class CheckList(BoxLayout):
         undoBtn = ImageButton(
             source = 'data/undo.png',
             color_normal = settings['redColor'],
-            size_hint = (.3, 1),
             on_release = undo,
         )
         buttons.add_widget(undoBtn)
@@ -568,7 +575,6 @@ class CheckList(BoxLayout):
         bookmarkBtn = LongpressImageButton(
             source = 'data/bookmark.png',
             color_normal = settings['greenColor'],
-            size_hint = (.3, 1),
             on_short_press = lambda w: setBookmark(),
             on_long_press = lambda w: getBookmark(),
         )

@@ -23,7 +23,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.4.2'
+__version__ = '1.4.3'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -459,23 +459,26 @@ class CheckList(BoxLayout):
             global shoppingList
             shoppingList['active'] = selected
             populate()
+            writeFile(0)
 
         def editList(w):
+            buttonBox = BoxLayout()
+            top.add_widget(buttonBox)
             delete = ImageButton(
                 source = 'data/delete.png',
                 color_normal = [.5, 0, 0, 1],
                 size_hint_x = None,
                 width = settings['headerSize'],
-                on_release = lambda w: setListName(entry),
+                on_release = lambda w: deleteList(w),
             )
-            top.add_widget(delete)
+            buttonBox.add_widget(delete)
             entry = TextInput(
                 text = w.text,
                 height = settings['headerSize'],
                 multiline = False,
                 on_text_validate = lambda w: setListName(w),
             )
-            top.add_widget(entry)
+            buttonBox.add_widget(entry)
             saveBtn = ImageButton(
                 source = "data/ok.png",
                 color_normal = settings['greenColor'],
@@ -483,26 +486,68 @@ class CheckList(BoxLayout):
                 width = settings['headerSize'],
                 on_release = lambda x: setListName(entry),
             )
-            top.add_widget(saveBtn)
+            buttonBox.add_widget(saveBtn)
             copy = ImageButton(
                 source = 'data/copy.png',
                 color_normal = [1, 1, 1, .7],
                 size_hint_x = None,
                 width = settings['headerSize'],
-                on_release = lambda w: setListName(entry),
+                on_release = lambda w: copyList(w),
             )
-            top.add_widget(copy)
+            buttonBox.add_widget(copy)
+            new = ImageButton(
+                source = 'data/new.png',
+                color_normal = settings['greenColor'],
+                size_hint_x = None,
+                width = settings['headerSize'],
+                on_release = lambda w: createList(entry),
+            )
+            buttonBox.add_widget(new)
 
             top.remove_widget(title)
             top.remove_widget(searchBtn)
             entry.focused = True
 
-        def setListName(w):
-            title.text = w.text
+        def closeEditor(w):
             top.add_widget(title)
             top.add_widget(searchBtn)
-            top.remove_widget(w)
+            top.remove_widget(w.parent)
+
+        def setListName(w):
+            title.text = w.text
+            closeEditor(w)
             writeFile(0)
+
+        def createList(w):
+            global shoppingList
+            new = {
+                'name': 'New list',
+                'list': [{
+                    'section': 'Section',
+                    'items': []
+                }]}
+            at = shoppingList['active'] + 1
+            shoppingList['lists'].insert(at, new)
+            setActive(at)
+            closeEditor(w)
+
+        def copyList(w):
+            global shoppingList
+            at = shoppingList['active']
+            new = json.loads(json.dumps(shoppingList['lists'][at]))
+            new['name'] += ' 2'
+            at += 1
+            shoppingList['lists'].insert(at, new)
+            setActive(at)
+            closeEditor(w)
+
+        def deleteList(w):
+            at = shoppingList['active']
+            del(shoppingList['lists'][at])
+            if at >= len(shoppingList['lists']):
+                at = at - 1
+            setActive(at)
+            closeEditor(w)
 
         # Widgets
 

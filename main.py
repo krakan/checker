@@ -12,6 +12,8 @@ from kivy.uix.boxlayout import BoxLayout
 
 from kivy.uix.textinput import TextInput
 from kivy.uix.checkbox import CheckBox
+from kivy.uix.dropdown import DropDown
+from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 
 import os, sys, json, re, time, shutil
@@ -431,6 +433,77 @@ class CheckList(BoxLayout):
                     shoppingList = json.load(fd)
             populate()
 
+        def selectList(w):
+            global shoppingList
+            if len(shoppingList['lists']) < 2:
+                editList(w)
+                return
+            dropdown = DropDown(
+                on_select = lambda instance, selected: setActive(selected),
+            )
+            index = 0
+            for item in shoppingList['lists']:
+                btn = Button(
+                    text = item['name'],
+                    size_hint_y = None,
+                    background_color = settings['sectionColor'],
+                    height=settings['labelSize'],
+                )
+                btn.index = index
+                index += 1
+                btn.bind(on_release=lambda btn: dropdown.select(btn.index))
+                dropdown.add_widget(btn)
+            dropdown.open(w)
+
+        def setActive(selected):
+            global shoppingList
+            shoppingList['active'] = selected
+            populate()
+
+        def editList(w):
+            delete = ImageButton(
+                source = 'data/delete.png',
+                color_normal = [.5, 0, 0, 1],
+                size_hint_x = None,
+                width = settings['headerSize'],
+                on_release = lambda w: setListName(entry),
+            )
+            top.add_widget(delete)
+            entry = TextInput(
+                text = w.text,
+                height = settings['headerSize'],
+                multiline = False,
+                on_text_validate = lambda w: setListName(w),
+            )
+            top.add_widget(entry)
+            saveBtn = ImageButton(
+                source = "data/ok.png",
+                color_normal = settings['greenColor'],
+                size_hint_x = None,
+                width = settings['headerSize'],
+                on_release = lambda x: setListName(entry),
+            )
+            top.add_widget(saveBtn)
+            copy = ImageButton(
+                source = 'data/copy.png',
+                color_normal = [1, 1, 1, .7],
+                size_hint_x = None,
+                width = settings['headerSize'],
+                on_release = lambda w: setListName(entry),
+            )
+            top.add_widget(copy)
+
+            top.remove_widget(title)
+            top.remove_widget(searchBtn)
+            entry.focused = True
+
+        def setListName(w):
+            title.text = w.text
+            top.add_widget(title)
+            top.add_widget(searchBtn)
+            top.remove_widget(w)
+            writeFile(0)
+
         # Widgets
 
         def sectionButton(text):
@@ -514,6 +587,8 @@ class CheckList(BoxLayout):
         title = LongpressButton(
             text = 'Unknown',
             background_color = settings['sectionColor'],
+            on_short_press = selectList,
+            on_long_press = editList,
         )
         top.add_widget(title)
 

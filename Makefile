@@ -1,3 +1,6 @@
+help:
+	@echo deploy build release install run
+
 deploy:
 	buildozer android debug deploy run
 

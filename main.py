@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.4.1'
+__version__ = '1.4.2'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -158,6 +158,8 @@ class CheckList(BoxLayout):
 
         self.writeDeferred = False
         def writeFile(dt):
+            if dt and not self.writeDeferred:
+                return
             self.writeDeferred = False
             activeList = []
             for item in stack.children[::-1]:
@@ -384,7 +386,7 @@ class CheckList(BoxLayout):
                         stack.add_widget(label.check, index)
                     stack.add_widget(label, index)
 
-            writeFile(1)
+            writeFile(0)
 
         self.searchDeferred = False
         def doSearch(text, undo):
@@ -423,7 +425,7 @@ class CheckList(BoxLayout):
             if not bookmark:
                 print('no bookmark chosen')
                 return
-            writeFile(1)
+            writeFile(0)
             shutil.copy(f'{dataDir}/bookmarks/{bookmark}.json', f'{dataDir}/Plocka.json')
             with open(f'{dataDir}/Plocka.json') as fd:
                     shoppingList = json.load(fd)
@@ -552,7 +554,7 @@ class CheckList(BoxLayout):
         saveBtn = ImageButton(
             source = "data/ok.png",
             color_normal = settings['greenColor'],
-            on_release = lambda x: writeFile(1),
+            on_release = lambda x: writeFile(0),
         )
         buttons.add_widget(saveBtn)
 

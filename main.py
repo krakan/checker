@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.3.1'
+__version__ = '1.4.0'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -74,9 +74,10 @@ class CheckList(BoxLayout):
 
         os.makedirs(dataDir, exist_ok=True)
 
+        global shoppingList
         try:
             with open(dataDir + '/Plocka.json') as fd:
-                    shoppingList=json.load(fd)
+                    shoppingList = json.load(fd)
         except:
             shoppingList = [
               {"section": "Section 1", "items": [
@@ -114,7 +115,7 @@ class CheckList(BoxLayout):
         }
         try:
             with open(dataDir + '/settings.json') as fd:
-                    settings=json.load(fd)
+                    settings = json.load(fd)
                     for key in defaultSettings:
                         if not key in settings:
                             settings[key] = defaultSettings[key]
@@ -158,7 +159,7 @@ class CheckList(BoxLayout):
         self.writeDeferred = False
         def writeFile(dt):
             self.writeDeferred = False
-            shoppingList = []
+            activeList = []
             for item in stack.children[::-1]:
                 if item.type == 'item':
                     entry = {
@@ -171,7 +172,10 @@ class CheckList(BoxLayout):
                         "section": item.origText,
                         "items": []
                     }
-                    shoppingList.append(section)
+                    activeList.append(section)
+            shoppingList['lists'][shoppingList['active']]['name'] = title.text
+            shoppingList['lists'][shoppingList['active']]['list'] = activeList
+
             now = datetime.now().strftime("%Y%m%d%H%M%S")
             if os.path.exists(f'{dataDir}/Plocka.json'):
                 os.rename(f'{dataDir}/Plocka.json', f'{dataDir}/Plocka-{now}.json')
@@ -179,12 +183,13 @@ class CheckList(BoxLayout):
                 json.dump(shoppingList, fd, indent=2, ensure_ascii=False)
 
         def undo(instance):
+            global shoppingList
             try:
                 last = sorted(glob(f'{dataDir}/Plocka-*.json'))[-1]
                 os.rename(last, f'{dataDir}/Plocka.json')
                 with open(dataDir + '/Plocka.json') as fd:
-                        shoppingList=json.load(fd)
-                populate(stack, shoppingList)
+                        shoppingList = json.load(fd)
+                populate()
                 hideUnHide(hideBtn)
             except: pass
 
@@ -411,6 +416,7 @@ class CheckList(BoxLayout):
             popup.open()
 
         def useBookmark(w):
+            global shoppingList
             bookmark = w.content.chosen
             if not bookmark:
                 print('no bookmark chosen')
@@ -418,8 +424,8 @@ class CheckList(BoxLayout):
             writeFile(1)
             shutil.copy(f'{dataDir}/bookmarks/{bookmark}.json', f'{dataDir}/Plocka.json')
             with open(f'{dataDir}/Plocka.json') as fd:
-                    shoppingList=json.load(fd)
-            populate(stack, shoppingList)
+                    shoppingList = json.load(fd)
+            populate()
 
         # Widgets
 
@@ -459,9 +465,22 @@ class CheckList(BoxLayout):
             label.check = check
             return label
 
-        def populate(stack, shoppingList):
+        def populate():
+            global shoppingList
+            if not 'lists' in shoppingList:
+                shoppingList = {
+                    'lists': [
+                      {
+                        'name': 'Plocka',
+                        'list': shoppingList
+                      }
+                    ]
+                }
+            if not 'active' in shoppingList:
+                shoppingList['active'] = 0
+            title.text = shoppingList['lists'][shoppingList['active']]['name']
             stack.clear_widgets()
-            for section in shoppingList:
+            for section in shoppingList['lists'][shoppingList['active']]['list']:
                 sectionLabel = sectionButton(section['section'])
                 stack.add_widget(sectionLabel)
                 for item in section['items']:
@@ -489,8 +508,8 @@ class CheckList(BoxLayout):
         self.add_widget(top)
 
         title = LongpressButton(
-            text='Plocka',
-            background_color = [0, 1, 0, 0.5],
+            text = 'Unknown',
+            background_color = settings['sectionColor'],
         )
         top.add_widget(title)
 
@@ -521,7 +540,7 @@ class CheckList(BoxLayout):
         )
         scrollBox.add_widget(stack)
 
-        populate(stack, shoppingList)
+        populate()
 
         buttons = BoxLayout(
             size_hint=(1, None),

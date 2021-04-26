@@ -23,7 +23,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.4.3'
+__version__ = '1.4.4'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -441,8 +441,11 @@ class CheckList(BoxLayout):
             dropdown = DropDown(
                 on_select = lambda instance, selected: setActive(selected),
             )
-            index = 0
+            index = -1
             for item in shoppingList['lists']:
+                index += 1
+                if index == shoppingList['active']:
+                    continue
                 btn = Button(
                     text = item['name'],
                     size_hint_y = None,
@@ -450,7 +453,6 @@ class CheckList(BoxLayout):
                     height=settings['labelSize'],
                 )
                 btn.index = index
-                index += 1
                 btn.bind(on_release=lambda btn: dropdown.select(btn.index))
                 dropdown.add_widget(btn)
             dropdown.open(w)

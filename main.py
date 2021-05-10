@@ -23,7 +23,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.4.4'
+__version__ = '1.4.5'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -371,12 +371,10 @@ class CheckList(BoxLayout):
                     else:
                         orig.text = text
                 else:
-                    if orig.type == 'section' and todo != 'item' or todo == 'section':
-                        label = sectionButton(text)
-                    elif orig.type == 'item':
-                        label = itemButtonPair(text, orig.check.state == 'down')
-                    else:
+                    if todo == 'item':
                         label = itemButtonPair(text, False)
+                    else:
+                        label = sectionButton(text)
 
                     index = stack.children.index(orig)
                     if todo == 'before' or todo == 'section':

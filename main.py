@@ -65,10 +65,10 @@ class CheckList(BoxLayout):
             from android.permissions import request_permissions, check_permission, Permission
 
             sdcard = primary_external_storage_path()
-            dataDir = sdcard + '/Android/data/se.jonaseel.plocka/files'
+            dataDir = sdcard + '/plocka'
 
             if not os.path.exists(dataDir):
-                request_permissions([Permission.WRITE_EXTERNAL_STORAGE])
+                request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
                 while not check_permission(Permission.WRITE_EXTERNAL_STORAGE):
                     time.sleep(1)
         else:
@@ -103,7 +103,7 @@ class CheckList(BoxLayout):
         defaultSettings = {
             'headerSize': '40sp',
             'sectionSize': '20sp',
-            'sectionColor': [0,.5,0,1],
+            'sectionColor': [0, 1, 0, 0.5],
             'sectionTextSize': '10sp',
             'labelSize': '30sp',
             'itemColor': [0, 1, 0, 0.3],

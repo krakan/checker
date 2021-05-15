@@ -53,6 +53,7 @@ class LongpressButton(Factory.Button):
     __events__ = ('on_long_press', 'on_short_press')
 
     long_press_time = Factory.NumericProperty(0.2)
+    background_normal = ''
 
     def on_state(self, instance, value):
         lpt = self.long_press_time

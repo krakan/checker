@@ -38,7 +38,7 @@ class BookmarkList(BoxLayout):
             bookmark = filename[len(f'{self.dataDir}/bookmarks/'):-5]
             label = LongpressButton(
                 text = bookmark,
-                height = self.settings['labelSize'],
+                height = self.settings['itemSize'],
                 background_color = self.settings['sectionColor'],
                 size_hint = (1, None),
                 on_long_press = lambda w: edit(w),
@@ -83,7 +83,7 @@ class BookmarkList(BoxLayout):
 
         def edit(w):
             editBox = BoxLayout(
-                height = self.settings['labelSize'],
+                height = self.settings['itemSize'],
                 size_hint = (1, None),
             )
             entry = TextInput(
@@ -93,14 +93,14 @@ class BookmarkList(BoxLayout):
             )
             delete = ImageButton(
                 size_hint_x = None,
-                width = self.settings['labelSize'],
+                width = self.settings['itemSize'],
                 source = 'data/trash.png',
                 color_normal = self.settings['actionColor'],
                 on_release = lambda w: selectItem(entry),
             )
             ok = ImageButton(
                 size_hint_x = None,
-                width = self.settings['labelSize'],
+                width = self.settings['itemSize'],
                 source = 'data/ok.png',
                 color_normal = [0, .5, 0, 1],
                 on_release = lambda w: updateItem(entry),

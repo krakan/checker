@@ -23,7 +23,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.4.6'
+__version__ = '1.5.0'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -103,13 +103,14 @@ class CheckList(BoxLayout):
         defaultSettings = {
             'headerSize': '40sp',
             'sectionSize': '20sp',
-            'sectionColor': [0, 1, 0, 0.5],
+            'sectionColor': [0.21, 0.20, 0.26, 1],
             'sectionTextSize': '10sp',
-            'labelSize': '30sp',
-            'itemColor': [0, 1, 0, 0.3],
-            'inactiveColor': [1, 1, 1, 0.5],
-            'doneColor': [0, 1, 0, 1],
+            'itemSize': '30sp',
+            'itemColor': [0.20, 0.25, 0.29, 1],
+            'doneColor': [0.24, 0.30, 0.35, 1],
             'actionColor': [.2, .7, .9, 1],
+            'activeColor': [1, 1, 1, 1],
+            'inactiveColor': [1, 1, 1, 0.5],
             'redColor': [1, 0, 0, 0.5],
             'greenColor': [0, 1, 0, 0.5],
             'backupsToKeep': 10,
@@ -201,9 +202,11 @@ class CheckList(BoxLayout):
         def toggle(instance):
             if instance.check.state == 'down':
                 instance.background_color = settings['itemColor']
+                instance.color = settings['activeColor']
                 instance.check.state = 'normal'
             else:
                 instance.background_color = settings['doneColor']
+                instance.color = settings['inactiveColor']
                 instance.check.state = 'down'
 
             if not self.writeDeferred:
@@ -265,7 +268,7 @@ class CheckList(BoxLayout):
             entry = TextInput(
                 text = instance.text,
                 size_hint = (0.5, None),
-                height = settings['labelSize'],
+                height = settings['itemSize'],
                 multiline = False,
                 on_text_validate = lambda w: updateItem(w),
             )
@@ -274,35 +277,35 @@ class CheckList(BoxLayout):
             relative = ImageButton(
                 source = 'data/left.png' if instance.type == 'item' else 'data/right.png',
                 color_normal = [1, 1, 1, .7],
-                height = settings['labelSize'],
+                height = settings['itemSize'],
                 size_hint = (0.1, None),
                 on_release = lambda w: updateItem(entry),
             )
             before = ImageButton(
                 source = 'data/up.png',
                 color_normal = [1, 1, 1, .7],
-                height = settings['labelSize'],
+                height = settings['itemSize'],
                 size_hint = (0.1, None),
                 on_release = lambda w: updateItem(entry),
             )
             replace = ImageButton(
                 source = 'data/ok.png',
                 color_normal = [0, .5, 0, 1],
-                height = settings['labelSize'],
+                height = settings['itemSize'],
                 size_hint = (0.1, None),
                 on_release = lambda w: updateItem(entry),
             )
             after = ImageButton(
                 source = 'data/down.png',
                 color_normal = [1, 1, 1, .7],
-                height = settings['labelSize'],
+                height = settings['itemSize'],
                 size_hint = (0.1, None),
                 on_release = lambda w: updateItem(entry),
             )
             delete = ImageButton(
                 source = 'data/delete.png',
                 color_normal = [.5, 0, 0, 1],
-                height = settings['labelSize'],
+                height = settings['itemSize'],
                 size_hint = (0.1, None),
                 on_release = lambda w: updateItem(entry),
             )
@@ -448,7 +451,7 @@ class CheckList(BoxLayout):
                     text = item['name'],
                     size_hint_y = None,
                     background_color = settings['sectionColor'],
-                    height=settings['labelSize'],
+                    height=settings['itemSize'],
                 )
                 btn.index = index
                 btn.bind(on_release=lambda btn: dropdown.select(btn.index))
@@ -567,7 +570,7 @@ class CheckList(BoxLayout):
         def itemButtonPair(text, done):
             label = LongpressButton(
                 text = text,
-                height = settings['labelSize'],
+                height = settings['itemSize'],
                 background_color = settings['itemColor'],
                 size_hint = (0.95, None),
                 on_short_press = lambda w: toggle(w),
@@ -575,12 +578,13 @@ class CheckList(BoxLayout):
             )
             label.type = 'item'
             check = CheckBox(
-                height = settings['labelSize'],
+                height = settings['itemSize'],
                 size_hint = (0.05, None),
                 on_release = lambda w: crossCheck(w),
             )
             if done:
                   label.background_color = settings['doneColor']
+                  label.color = settings['inactiveColor']
                   check.state = 'down'
             check.type = 'check'
             check.label = label

@@ -15,6 +15,7 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.dropdown import DropDown
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
+from kivy.uix.rst import RstDocument
 
 import os, sys, json, re, time, shutil
 from glob import glob
@@ -23,7 +24,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.5.0'
+__version__ = '1.5.1'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -75,6 +76,8 @@ class CheckList(BoxLayout):
             dataDir = os.environ['HOME'] + '/.config/Plocka'
 
         os.makedirs(dataDir, exist_ok=True)
+
+        scriptDir = os.path.dirname(os.path.realpath(__file__))
 
         global shoppingList
         try:
@@ -436,9 +439,7 @@ class CheckList(BoxLayout):
 
         def selectList(w):
             global shoppingList
-            if len(shoppingList['lists']) < 2:
-                editList(w)
-                return
+
             dropdown = DropDown(
                 on_select = lambda instance, selected: setActive(selected),
             )
@@ -456,13 +457,40 @@ class CheckList(BoxLayout):
                 btn.index = index
                 btn.bind(on_release=lambda btn: dropdown.select(btn.index))
                 dropdown.add_widget(btn)
+
+            about = Button(
+                text = "About Plocka",
+                size_hint_y = None,
+                background_color = settings['sectionColor'],
+                height=settings['itemSize'],
+            )
+            about.bind(on_release=lambda about: dropdown.select(-1))
+            dropdown.add_widget(about)
+
             dropdown.open(w)
 
         def setActive(selected):
-            global shoppingList
-            shoppingList['active'] = selected
-            populate()
-            writeFile(0)
+            if selected > -1:
+                global shoppingList
+                shoppingList['active'] = selected
+                populate()
+                writeFile(0)
+            else:
+
+                with open(scriptDir + '/ABOUT.rst') as fd:
+                    about = fd.read()
+
+                with open(scriptDir + '/LICENSE') as fd:
+                    license = fd.read()
+
+                aboutText = RstDocument(
+                    text = about + '\n\nLicense\n-------\n\n' + license,
+                )
+                popup = Popup(
+                    title = "About Plocka",
+                    content = aboutText,
+                )
+                popup.open()
 
         def editList(w):
             buttonBox = BoxLayout()

@@ -11,7 +11,7 @@ release:
 	buildozer android release
 
 install:
-	adb install bin/plocka-$$(grep __version__ main.py | cut -d"'" -f2)-armeabi-v7a-debug.apk
+	adb install bin/plocka-$$(grep '^ *__version__ *=' main.py | cut -d"'" -f2)-armeabi-v7a-debug.apk
 
 run:
 	python main.py

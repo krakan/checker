@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.6.1'
+__version__ = '1.6.2'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -216,7 +216,7 @@ class CheckList(BoxLayout):
             if not self.writeDeferred:
                 self.writeDeferred = True
                 saveBtn.color = settings['actionColor']
-                Clock.schedule_once(writeFile, 1)
+                Clock.schedule_once(writeFile, 10)
 
             if hideBtn.state == 'down' and instance.check.state == 'down':
                 hide(instance.check)

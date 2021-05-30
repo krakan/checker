@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.5.1'
+__version__ = '1.6.0'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -118,6 +118,7 @@ class CheckList(BoxLayout):
             'greenColor': [0, 1, 0, 0.5],
             'backupsToKeep': 10,
             'maxBackupAge': 1,
+            'showSections': 'maybe',
         }
         try:
             with open(dataDir + '/settings.json') as fd:
@@ -258,7 +259,7 @@ class CheckList(BoxLayout):
                             unhide(item)
                             hasChildren = True
                     elif item.type == 'section':
-                        if hasChildren:
+                        if hasChildren and settings['showSections'] == 'always':
                             unhide(item)
                             hasChildren = False
                         else:
@@ -635,8 +636,9 @@ class CheckList(BoxLayout):
             title.text = shoppingList['lists'][shoppingList['active']]['name']
             stack.clear_widgets()
             for section in shoppingList['lists'][shoppingList['active']]['list']:
-                sectionLabel = sectionButton(section['section'])
-                stack.add_widget(sectionLabel)
+                if settings['showSections'] != 'never':
+                    sectionLabel = sectionButton(section['section'])
+                    stack.add_widget(sectionLabel)
                 for item in section['items']:
                     label = itemButtonPair(item['item'], item['done'])
                     stack.add_widget(label.check)

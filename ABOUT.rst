@@ -1,7 +1,6 @@
-Plocka
-======
-
 A simple cross platform checklist app.
+
+The source code is available at https://github.com/krakan/plocka/.
 
 Why
 ---

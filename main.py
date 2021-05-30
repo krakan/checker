@@ -487,7 +487,7 @@ class CheckList(BoxLayout):
                     text = about + '\n\nLicense\n-------\n\n' + license,
                 )
                 popup = Popup(
-                    title = "About Plocka",
+                    title = "Plocka " + __version__,
                     content = aboutText,
                 )
                 popup.open()

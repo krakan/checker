@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.6.0'
+__version__ = '1.6.1'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -106,7 +106,7 @@ class CheckList(BoxLayout):
         defaultSettings = {
             'headerSize': '40sp',
             'sectionSize': '20sp',
-            'sectionColor': [0.21, 0.20, 0.26, 1],
+            'sectionColor': [0.1, 0.2, 0.2, 1],
             'sectionTextSize': '10sp',
             'itemSize': '30sp',
             'itemColor': [0.20, 0.25, 0.29, 1],

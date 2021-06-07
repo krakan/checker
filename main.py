@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.6.2'
+__version__ = '1.6.3'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -407,7 +407,7 @@ class CheckList(BoxLayout):
             hideUnHide(hideBtn)
 
         def setBookmark():
-            now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            now = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
             os.makedirs(f'{dataDir}/bookmarks', exist_ok=True)
             print(f"set bookmark '{dataDir}/bookmarks/{now}.json'")
             shutil.copy(f'{dataDir}/Plocka.json', f'{dataDir}/bookmarks/{now}.json')

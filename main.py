@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.6.3'
+__version__ = '1.6.4'
 
 # +----------------------------------+
 # | +------------------------------+ |

@@ -120,6 +120,8 @@ class BookmarkList(BoxLayout):
             entry.parent.remove_widget(entry)
 
         def updateItem(entry):
+            reservedChars = '[?:"*|/\\\<>]'
+            entry.text = re.sub(reservedChars, '-', entry.text)
             os.rename(f'{self.dataDir}/bookmarks/{entry.orig.text}.json', f'{self.dataDir}/bookmarks/{entry.text}.json')
             entry.orig.text = entry.text
             stack.add_widget(entry.orig, entry.index)

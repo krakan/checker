@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from bookmarks import BookmarkList
 from buttons import ToggleImageButton, ImageButton, LongpressButton, LongpressImageButton
 
-__version__ = '1.6.4'
+__version__ = '1.7.0'
 
 # +----------------------------------+
 # | +------------------------------+ |
@@ -337,7 +337,14 @@ class CheckList(BoxLayout):
             stack.add_widget(before, index)
             stack.add_widget(replace, index)
             stack.add_widget(after, index)
+
+            entry.select_all()
+            Clock.schedule_once(lambda dt: reselect(entry), 0.5)
+
+        def reselect(entry):
+            # repeat select_all after half a second to avoid losing focus on release
             entry.focused = True
+            entry.select_all()
 
         def updateItem(entry):
             todo = 'replace'
@@ -392,6 +399,7 @@ class CheckList(BoxLayout):
                     if label.type == 'item':
                         stack.add_widget(label.check, index)
                     stack.add_widget(label, index)
+                    edit(label)
 
             writeFile(0)
 
